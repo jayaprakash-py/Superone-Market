@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>SuperOne Market</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="SuperOne Market">
+<link rel="manifest" href="manifest.json">
+<script>
+// Register the service worker (only works when hosted, e.g. GitHub Pages —
+// silently skipped when opened as a local file, so nothing breaks).
+if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+  window.addEventListener('load', function() {
+    navigator.serviceWorker.register('sw.js').catch(function(){});
+  });
+}
+</script>
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#C6812C">
+<style>
+  :root{
+    --paper:#F5F1E8;
+    --surface:#FFFFFF;
+    --ink:#211D17;
+    --ink-soft:#8A8175;
+    --line:#E6DFCF;
+    --amber:#C6812C;
+    --amber-deep:#9C5F1C;
+    --amber-tint:#FBEDD6;
+    --green:#3C6B4C;
+    --red:#A8402F;
+    --red-tint:#F5DFDA;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body { margin:0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background:var(--paper); color:var(--ink); padding-bottom:96px; }
+  .hidden { display:none !important; }
+  .wrap { max-width:640px; margin:0 auto; }
+  .display { font-family: Georgia, "Times New Roman", "Noto Serif", serif; }
+
+  /* Header */
+  header { position:sticky; top:0; z-index:10; background:var(--paper); border-bottom:3px solid var(--ink); padding:16px 16px 10px; }
+  .header-row { display:flex; justify-content:space-between; align-items:center; max-width:640px; margin:0 auto; gap:10px; }
+  .title-block { display:flex; flex-direction:column; line-height:1.05; }
+  .eyebrow { font-size:10px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--amber-deep); margin-bottom:2px; }
+  .title { font-size:23px; font-weight:700; color:var(--ink); margin:0; letter-spacing:-.01em; }
+  .header-btns { display:flex; gap:8px; flex-shrink:0; }
+  .icon-btn { background:var(--surface); color:var(--ink); border:1.5px solid var(--line); width:40px; height:40px; border-radius:10px; display:flex; align-items:center; justify-content:center; }
+  .print-btn { position:relative; background:var(--ink); color:var(--paper); border:none; padding:0 16px; height:40px; border-radius:10px; font-weight:700; font-size:13px; letter-spacing:.03em; text-transform:uppercase; display:flex; align-items:center; gap:7px; }
+  .cart-badge { display:none; position:absolute; top:-6px; right:-6px; background:var(--amber); color:#fff; font-size:11px; width:20px; height:20px; border-radius:50%; align-items:center; justify-content:center; font-weight:800; border:2px solid var(--paper); }
+
+  .search-wrap { position:relative; max-width:640px; margin:12px auto 0; }
+  #search-input { width:100%; background:var(--surface); border:1.5px solid var(--line); padding:11px 34px 11px 36px; border-radius:10px; outline:none; font-size:14px; font-weight:500; color:var(--ink); }
+  #search-input:focus { border-color:var(--amber); }
+  #search-input::placeholder { color:var(--ink-soft); }
+  .search-icon { position:absolute; left:12px; top:50%; transform:translateY(-50%); color:var(--ink-soft); display:flex; }
+  .clear-btn { display:none; position:absolute; right:10px; top:50%; transform:translateY(-50%); background:none; border:none; color:var(--ink-soft); font-size:14px; font-weight:700; width:22px; height:22px; }
+
+  .pills { display:flex; overflow-x:auto; gap:6px; padding:12px 16px 10px; max-width:640px; margin:0 auto; scrollbar-width:none; }
+  .pills::-webkit-scrollbar { display:none; }
+  .pill { white-space:nowrap; padding:6px 13px; border-radius:8px; font-size:12.5px; font-weight:700; border:1.5px solid var(--line); background:var(--surface); color:var(--ink-soft); }
+  .pill.active { background:var(--amber); color:#fff; border-color:var(--amber); }
+
+  /* Item list */
+  #item-list { padding:6px 16px 16px; display:flex; flex-direction:column; gap:9px; max-width:640px; margin:0 auto; }
+  .item-row { display:flex; align-items:center; justify-content:space-between; padding:10px; border-radius:12px; border:1.5px solid var(--line); background:var(--surface); }
+  .item-row.active { background:var(--amber-tint); border-color:var(--amber); }
+  .item-thumb { position:relative; width:50px; height:50px; border-radius:10px; overflow:hidden; border:1.5px solid var(--line); background:#EFEAE0; display:flex; flex-direction:column; align-items:center; justify-content:center; margin-right:10px; flex-shrink:0; }
+  .item-thumb img { width:100%; height:100%; object-fit:cover; }
+  .item-thumb input { position:absolute; inset:0; opacity:0; width:100%; height:100%; }
+  .item-thumb .cam { color:var(--ink-soft); display:flex; }
+  .item-info { flex:1; min-width:0; padding-right:8px; }
+  .item-cat { font-size:9.5px; font-weight:700; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.08em; margin-bottom:2px; }
+  .item-name { font-weight:600; font-size:15.5px; line-height:1.25; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:var(--ink); }
+  .item-name.active { color:var(--amber-deep); font-weight:700; }
+  .item-name.new { color:var(--green); }
+
+  .qty-box { display:flex; align-items:center; gap:0; background:var(--surface); border-radius:9px; border:1.5px solid var(--line); flex-shrink:0; overflow:hidden; }
+  .item-row.active .qty-box { border-color:var(--amber); }
+  .qty-btn { width:34px; height:34px; border:none; background:none; font-size:17px; font-weight:700; display:flex; align-items:center; justify-content:center; color:var(--ink); }
+  .qty-btn.minus { border-right:1.5px solid var(--line); }
+  .qty-btn.plus { border-left:1.5px solid var(--line); color:var(--amber-deep); }
+  .qty-val { width:26px; text-align:center; font-weight:800; font-size:17px; color:var(--ink); font-variant-numeric:tabular-nums; }
+  .qty-val.active { color:var(--amber-deep); }
+
+  .empty-state { text-align:center; padding:56px 20px; color:var(--ink-soft); }
+  .empty-state .add-new { margin-top:14px; color:var(--amber-deep); font-weight:700; background:var(--amber-tint); padding:9px 18px; border-radius:9px; font-size:13.5px; display:inline-block; border:none; }
+
+  /* Modal */
+  .modal-bg { position:fixed; inset:0; background:rgba(33,29,23,.55); z-index:50; display:flex; align-items:flex-end; justify-content:center; padding:16px; }
+  .modal { background:var(--paper); width:100%; max-width:420px; border-radius:20px; padding:22px; border:1.5px solid var(--line); }
+  .modal-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:18px; }
+  .modal-head h2 { font-size:17px; font-weight:700; margin:0; }
+  .modal-close { background:var(--surface); border:1.5px solid var(--line); width:32px; height:32px; border-radius:9px; font-size:14px; }
+  .photo-pick { width:92px; height:92px; margin:0 auto 16px; border-radius:14px; border:1.5px dashed var(--amber); background:var(--amber-tint); display:flex; flex-direction:column; align-items:center; justify-content:center; position:relative; overflow:hidden; gap:4px; }
+  .photo-pick span { font-size:11px; font-weight:700; color:var(--amber-deep); }
+  .photo-pick img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+  .photo-pick input { position:absolute; inset:0; opacity:0; }
+  label.field-label { display:block; font-size:12.5px; font-weight:700; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.05em; margin-bottom:6px; }
+  .field-input, .field-select { width:100%; padding:12px 14px; background:var(--surface); border:1.5px solid var(--line); border-radius:10px; font-size:16px; font-weight:500; color:var(--ink); margin-bottom:14px; }
+  .field-input:focus, .field-select:focus { outline:none; border-color:var(--amber); }
+  .submit-btn { width:100%; background:var(--ink); color:var(--paper); font-weight:700; font-size:15px; text-transform:uppercase; letter-spacing:.03em; padding:14px; border:none; border-radius:10px; }
+
+  /* Print view */
+  #print-view .toolbar { position:sticky; top:0; background:var(--ink); color:var(--paper); padding:14px 16px; display:flex; flex-direction:column; gap:12px; z-index:20; }
+  .toolbar-top { display:flex; justify-content:space-between; align-items:center; max-width:640px; margin:0 auto; width:100%; }
+  .back-btn { background:none; border:none; color:#C9C1B2; font-weight:600; font-size:14px; display:flex; align-items:center; gap:4px; padding:0; }
+  .toolbar-actions { display:flex; gap:10px; max-width:640px; margin:0 auto; width:100%; }
+  .btn-print { flex:1; background:var(--amber); color:#fff; border:none; padding:13px; border-radius:10px; font-weight:700; text-transform:uppercase; letter-spacing:.03em; display:flex; align-items:center; justify-content:center; gap:7px; font-size:14px; }
+  .btn-clear { background:rgba(168,64,47,.25); color:#E8A99C; border:none; padding:0 16px; border-radius:10px; display:flex; align-items:center; }
+
+  .report { background:var(--surface); padding:20px 16px; max-width:680px; margin:0 auto; }
+  .report-head { border-bottom:3px solid var(--ink); padding-bottom:14px; margin-bottom:22px; }
+  .report-head .eyebrow { color:var(--amber-deep); }
+  .report-head h1 { font-size:27px; font-weight:700; margin:0; letter-spacing:-.01em; }
+  .report-head h2 { font-size:13px; font-weight:600; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.08em; margin:3px 0 0; }
+  .report-meta { display:flex; justify-content:space-between; margin-top:10px; font-weight:700; font-size:14px; color:var(--ink); }
+  .cat-section { margin-bottom:22px; break-inside:avoid; }
+  .cat-title { font-family: Georgia, "Noto Serif", serif; font-size:15px; font-weight:700; text-transform:uppercase; letter-spacing:.03em; color:var(--ink); padding:0 0 6px; margin:0 0 6px; border-bottom:1.5px solid var(--ink); }
+  table { width:100%; border-collapse:collapse; }
+  td { padding:8px 4px; border-bottom:1px solid var(--line); font-weight:600; font-size:14.5px; vertical-align:middle; color:var(--ink); }
+  .qty-chip { display:inline-flex; align-items:center; justify-content:center; min-width:28px; height:26px; font-weight:800; font-size:14.5px; border:1.5px solid var(--ink); border-radius:6px; font-variant-numeric:tabular-nums; }
+  .empty-order { text-align:center; padding:70px 20px; color:var(--ink-soft); font-weight:600; }
+
+  @media print {
+    @page { margin: 9mm; }
+    header, .toolbar, .pills, .search-wrap { display:none !important; }
+    body { padding-bottom:0; background:#fff; font-size:8pt; }
+    .report { padding:0; max-width:none; }
+    .report-head { padding-bottom:4pt; margin-bottom:6pt; border-bottom-width:1.5pt; }
+    .report-head .eyebrow { display:none; }
+    .report-head h1 { font-size:14pt; }
+    .report-head h2 { font-size:8pt; margin-top:1pt; }
+    .report-meta { margin-top:3pt; font-size:8pt; }
+    .print-cols { display:flex; gap:8pt; }
+    .print-cols > .print-col { flex:1; min-width:0; }
+    .cat-section { margin-bottom:6pt; break-inside: avoid; page-break-inside: avoid; }
+    .cat-title { font-size:8pt; padding-bottom:1.5pt; margin-bottom:2pt; border-bottom-width:0.75pt; letter-spacing:.01em; }
+    table { border-collapse:collapse; }
+    td { padding:1.2pt 3pt; font-size:8pt; border-bottom-width:0.5pt; line-height:1.15; }
+    .qty-chip { min-width:13pt; height:11pt; font-size:7.5pt; border-width:0.75pt; border-radius:2pt; }
+    .qty-chip { border-color:#000; }
+    .cat-title, .report-head { border-color:#000; }
+  }
+</style>
+</head>
+<body>
+
+<div id="shop-view">
+  <header>
+    <div class="header-row">
+      <div class="title-block">
+        <span class="eyebrow">Weekly Restock</span>
+        <h1 class="title display">SuperOne Market</h1>
+      </div>
+      <div class="header-btns">
+        <button class="icon-btn" onclick="switchView('history')" title="Order history">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+        </button>
+        <button class="icon-btn" onclick="openAddModal()" title="Add item">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+        </button>
+        <button class="print-btn" onclick="switchView('print')">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v8H6z"/></svg>
+          Print
+          <span id="cart-count" class="cart-badge">0</span>
+        </button>
+      </div>
+    </div>
+    <div class="search-wrap">
+      <span class="search-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></span>
+      <input id="search-input" type="text" placeholder="Search items..." oninput="handleSearch(this.value)">
+      <button id="clear-search" class="clear-btn" onclick="clearSearchField()">✕</button>
+    </div>
+  </header>
+  <div class="pills" id="category-pills"></div>
+  <div id="item-list"></div>
+</div>
+
+<div id="print-view" class="hidden">
+  <div class="toolbar">
+    <div class="toolbar-top">
+      <button class="back-btn" onclick="switchView('shop')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+        Back to Store
+      </button>
+      <div id="print-header-count" style="font-weight:700; font-size:14px;">0 Items in Order</div>
+    </div>
+    <div class="toolbar-actions">
+      <button class="btn-print" onclick="printOrder()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v8H6z"/></svg>
+        Print / Save PDF
+      </button>
+      <button class="btn-clear" onclick="clearEntireOrder()">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+      </button>
+    </div>
+  </div>
+  <div class="report">
+    <div class="report-head">
+      <span class="eyebrow">Order Pad</span>
+      <h1 class="display">SuperOne Market</h1>
+      <h2>Weekly Order Report</h2>
+      <div class="report-meta">
+        <div id="report-date">Date:</div>
+        <div id="report-total">Total Items: 0</div>
+      </div>
+    </div>
+    <div id="print-report-content" class="print-cols"></div>
+  </div>
+</div>
+
+<div id="history-view" class="hidden">
+  <div class="toolbar">
+    <div class="toolbar-top">
+      <button class="back-btn" onclick="switchView('shop')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+        Back to Store
+      </button>
+      <div style="font-weight:700; font-size:14px;">Order History</div>
+    </div>
+  </div>
+  <div id="history-list" style="padding:16px; max-width:640px; margin:0 auto;"></div>
+</div>
+
+<div id="add-modal" class="modal-bg hidden">
+  <div class="modal">
+    <div class="modal-head">
+      <h2>Add New Item</h2>
+      <button class="modal-close" onclick="closeAddModal()">✕</button>
+    </div>
+    <div class="photo-pick" id="photo-pick">
+      <div id="modal-img-placeholder">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--amber-deep); margin:0 auto; display:block;"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+        <span>Add Photo</span>
+      </div>
+      <img id="modal-img-preview" class="hidden">
+      <input type="file" accept="image/*" capture="environment" onchange="handleModalImage(this)">
+    </div>
+    <label class="field-label">Item Name</label>
+    <input type="text" id="new-item-name" class="field-input" placeholder="e.g. Swisher Banana...">
+    <label class="field-label">Category</label>
+    <select id="new-item-cat" class="field-select"></select>
+    <button class="submit-btn" onclick="submitNewItem()">Add to Order List</button>
+  </div>
+</div>
+
+
+<script>
+const initialData = {
+  "Black & Mild": ["Loose - Reg", "Loose - Jazz", "Loose - Casino", "Loose - Wine", "Loose - Sweet", "Loose - Apple", "Loose - Cream", "Loose - Cherry", "Loose - Select", "Loose - WT Casino", "Loose - WT Jazz", "Loose - WT Sweet", "Loose - WT Reg", "Loose - WT Wine", "5 Pack - Reg", "5 Pack - Wine", "5 Pack - Jazz", "5 Pack - Casino", "5 Pack - Sweet", "5 Pack - Apple", "5 Pack - Cream", "5 Pack - WT Wine", "5 Pack - WT Reg", "FT - Reg", "FT - Sweet", "Gold & Mild", "Deluxe"],
+  "Slapwood": ["Dark", "Reg"],
+  "Hemp Wraps": ["Harvest Hemp", "True Hemp"],
+  "Swisher": ["Red", "Diamond", "Silver", "Green", "Peach", "Grape", "Strawberry", "Blueberry", "Black", "Wild Rush", "Tropical Fusion", "Summer Twist", "Banana Smash", "Leaf - Original", "Leaf - Honey", "Leaf - Peach", "Leaf - Cognac", "Leaf - Aromatic", "Leaf - Irish", "Leaf - Dark Stout", "Mini - Orig", "Mini - Diamond", "Mini - Short Red", "Mini - Grape", "Mini - Blueberry", "Wraps - Orig", "Wraps - Irish", "Wraps - Peach", "Wraps - Smooth"],
+  "White Owl": ["Red", "Green", "Silver", "Peach", "Emerald", "White Grape", "Mango", "Blue Raspberry", "Tropical Twist", "Honey", "Black", "Gold", "Blue", "Platinum", "White Russian", "Strawberry", "Pineapple", "Vanilla", "Sweets"],
+  "Game": ["Red", "Blue", "Diamond", "Silver", "Green", "Black", "Black Sweet", "Grape", "Honey", "Pineapple", "White Grape", "Mango", "White Peach", "Vanilla", "Black Cherry", "Gold", "Wine", "Blueberry"],
+  "Zig Zag": ["Straight up", "Red", "Green", "Pink", "Blueberry", "Grape", "Diamond", "Island Hemp", "Apple", "Cherry", "Vanilla", "Mango", "Strawberry", "Melon", "NL - White Russian", "NL - Southern Peach", "NL - Strawberry Rush", "NL - Sweet Cognac"],
+  "Dutch": ["Palma", "Green Env", "Honey", "Sweet", "Berry", "OG", "Roy Haze", "Blue Dream", "Irish", "Gold", "Platinum", "Silver", "Blue Jazz", "Vanilla", "Chocolate", "Creme", "Java", "Russian Cream", "Grape", "Mint", "Blue"],
+  "Natty": ["Natural", "Pineapple", "Watermelon"],
+  "Wild Hemp": ["Natural", "Diamond"],
+  "Lil Leaf": ["Russ Cream", "Mango", "Dark Red", "Dark White", "Cognac", "Orig", "Wht Rum", "Dark"],
+  "Show & Others": ["Show - Sweet", "Show - Silver", "Show - Wht Grape", "Show - Watermelon", "Show - Diamond", "Show - WET/Fruity", "Show - Green", "Good Time - Red", "Good Time - Green", "Good Time - Diamond", "Good Time - White Grape", "Good Time - Watermelon", "Good Time - Blueberry", "Good Time - Vanilla", "Good Time - Mango", "Good Time - Peach", "Good Time - Black Sweet", "Good Time - Cognac", "Supreme - Red", "Supreme - Green", "Al Capone - Rum", "Al Capone - Orig", "Al Capone - Cognac"],
+  "Backwoods & BLK": ["BW 5pk - Russ Cream", "BW 5pk - Banana", "BW 5pk - Caramel", "BW 5pk - Vanilla", "BW 5pk - Grape", "BW 5pk - Chocolate", "BW 5pk - Original", "BW 5pk - Honey", "BW 5pk - Honey Berry", "BW 5pk - Honey Bourbon", "BW 5pk - Sweet Aromatic", "BW 5pk - Dark Stout", "BW 5pk - Black Russian", "BW 5pk - Cognac XO", "BW 5pk - Wild Rum", "BW 5pk - Smooth", "BLK - Smooth", "BLK - Grape", "BLK - Berry", "BLK - Cherry", "BLK - Wine", "BLK - Cocoa", "Dawoods - Afghani", "Dawoods - Cheetah", "Dawoods - Diesel"],
+  "RAW & Papers": ["RAW 1.25", "RAW 1.5", "RAW King Slim", "RAW King Jumbo", "RAW Tips", "RAW 20pk King", "RAW 20pk 1.25", "RAW Cones 6pk", "RAW Cones 3pk", "Joker 1.25", "Joker 1.5", "Blizzy - Orig", "Blizzy - Russian"],
+  "Vapes": ["Geekbars - Miami", "Geekbars - Frz Wtr", "Geekbars - Bl Razz", "Geekbars - Blkbry Bpop", "Breeze - Cherry Lem", "Breeze - Blue Mint", "Breeze - Spearmint", "Breeze - Banana Mint", "Breeze - Blue Razz", "Breeze - Blue Banana", "Breeze - Strw Peach", "Breeze - Pineapple Coco", "Breeze - Pomegranate", "Breeze - Citrus", "Breeze - OR Mango"],
+  "Leaves & Wraps": ["Lava Kush - Lava Trufflez", "LIT - Mango", "LIT - Maui", "LIT - Purp", "Boss Leaf - Orig", "Boss Leaf - Cookies", "Boss Leaf - Jamaican", "Camo - Naked", "Camo - Russian", "Camo - Honey", "Camo - Goji", "Camo - Passion", "Camo - Vanilla", "Camo - Natural", "Looseleaf - Cookies", "Looseleaf - Emerald", "Looseleaf - Ruby"],
+  "Misc & Store": ["Pickles - Hot", "Pickles - Kosher", "Pickles - Dill", "Gum - Doublemint", "Gum - Spearmint", "Gum - Juicy Frt", "Gum - Winterfresh", "Gum - Big Red", "Toothbrushes (10)", "Toothpaste", "Vaseline (50ml)", "Axe", "Slimelicker", "Tshirts/Thermals", "Cheap Prerolls"]
+};
+
+// Safari blocks localStorage on file:// pages (opened directly from Files app),
+// which otherwise throws and breaks the whole app into a blank screen.
+// Fall back to a simple in-memory store so the app still works either way —
+// on iPhone, data just won't persist between opens unless hosted as a link.
+let memoryFallback = {};
+let storageBlocked = false;
+const safeStorage = {
+  getItem(key) {
+    try { return localStorage.getItem(key); }
+    catch (e) { storageBlocked = true; return memoryFallback[key] || null; }
+  },
+  setItem(key, value) {
+    try { localStorage.setItem(key, value); }
+    catch (e) { storageBlocked = true; memoryFallback[key] = value; }
+  }
+};
+
+let catalog = [];
+function buildFreshCatalog() {
+  const fresh = [];
+  let idCounter = 1;
+  Object.entries(initialData).forEach(([category, items]) => {
+    items.forEach(name => {
+      fresh.push({ id: idCounter++, name, category, orderQty: 0, image: null });
+    });
+  });
+  return fresh;
+}
+try {
+  const savedCatalog = safeStorage.getItem('superone_market_catalog');
+  catalog = savedCatalog ? JSON.parse(savedCatalog) : buildFreshCatalog();
+  if (!Array.isArray(catalog) || catalog.length === 0) catalog = buildFreshCatalog();
+  // One-time recategorization: Slapwood and Hemp items used to be lumped
+  // into "Black & Mild" — move them to their own categories if found.
+  let recategorized = false;
+  catalog.forEach(item => {
+    if (item.category === 'Black & Mild' && /^Slapwood - /.test(item.name)) {
+      item.category = 'Slapwood';
+      item.name = item.name.replace(/^Slapwood - /, '');
+      recategorized = true;
+    } else if (item.category === 'Black & Mild' && (item.name === 'Harvest Hemp' || item.name === 'True Hemp')) {
+      item.category = 'Hemp Wraps';
+      recategorized = true;
+    }
+  });
+  if (recategorized) safeStorage.setItem('superone_market_catalog', JSON.stringify(catalog));
+
+  // Sync: any item in the base catalog that's missing from the saved list gets
+  // added at qty 0, without touching items or quantities the person already has.
+  let nextId = Date.now();
+  let added = false;
+  Object.entries(initialData).forEach(([category, items]) => {
+    items.forEach(name => {
+      const exists = catalog.some(item => item.category === category && item.name.toLowerCase() === name.toLowerCase());
+      if (!exists) {
+        catalog.push({ id: nextId++, name, category, orderQty: 0, image: null });
+        added = true;
+      }
+    });
+  });
+  if (added) safeStorage.setItem('superone_market_catalog', JSON.stringify(catalog));
+} catch (e) {
+  catalog = buildFreshCatalog();
+}
+
+let currentCategoryFilter = 'All';
+let currentSearchQuery = '';
+let currentModalImageBase64 = null;
+const categoriesList = ['All', ...Object.keys(initialData)];
+
+// One-time cleanup: any photo saved before compression was added is still
+// full camera resolution and can be several MB — that's the usual cause of
+// slow taps and slow print preview. Shrink those down in the background.
+function migrateOversizedImages() {
+  const targets = catalog.filter(item => item.image && item.image.length > 60000);
+  if (targets.length === 0) return;
+  let remaining = targets.length;
+  targets.forEach(item => {
+    const img = new Image();
+    img.onload = function() {
+      const maxDim = 220;
+      let w = img.width, h = img.height;
+      if (w > h && w > maxDim) { h = Math.round(h * maxDim / w); w = maxDim; }
+      else if (h >= w && h > maxDim) { w = Math.round(w * maxDim / h); h = maxDim; }
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      item.image = canvas.toDataURL('image/jpeg', 0.6);
+      if (--remaining === 0) { saveState(); renderItems(); }
+    };
+    img.onerror = function() { if (--remaining === 0) { saveState(); renderItems(); } };
+    img.src = item.image;
+  });
+}
+try { migrateOversizedImages(); } catch (e) { /* non-fatal, item photos just won't be optimized this run */ }
+
+function esc(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// Shrinks any photo down to a small thumbnail before it's stored, so saving
+// stays instant even after adding lots of photos (full camera photos are
+// several MB each and would otherwise slow every tap down).
+function compressImage(file, callback) {
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const img = new Image();
+    img.onload = function() {
+      const maxDim = 220;
+      let w = img.width, h = img.height;
+      if (w > h && w > maxDim) { h = Math.round(h * maxDim / w); w = maxDim; }
+      else if (h >= w && h > maxDim) { w = Math.round(w * maxDim / h); h = maxDim; }
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      callback(canvas.toDataURL('image/jpeg', 0.6));
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function saveState() {
+  safeStorage.setItem('superone_market_catalog', JSON.stringify(catalog));
+  updateGlobalBadges();
+}
+
+function renderCategories() {
+  const c = document.getElementById('category-pills');
+  c.innerHTML = '';
+  categoriesList.forEach(cat => {
+    const btn = document.createElement('button');
+    btn.className = 'pill' + (currentCategoryFilter === cat ? ' active' : '');
+    btn.innerText = cat;
+    btn.onclick = () => {
+      currentCategoryFilter = cat;
+      currentSearchQuery = '';
+      document.getElementById('search-input').value = '';
+      document.getElementById('clear-search').style.display = 'none';
+      renderCategories();
+      renderItems();
+    };
+    c.appendChild(btn);
+  });
+}
+
+function renderItems() {
+  const container = document.getElementById('item-list');
+  container.innerHTML = '';
+  const filtered = catalog.filter(item => {
+    const q = currentSearchQuery.toLowerCase();
+    const matchesSearch = item.name.toLowerCase().includes(q) || item.category.toLowerCase().includes(q);
+    const matchesCat = currentCategoryFilter === 'All' || item.category === currentCategoryFilter;
+    return matchesSearch && matchesCat;
+  });
+
+  if (filtered.length === 0) {
+    container.innerHTML = `<div class="empty-state">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" style="margin:0 auto 10px; display:block; opacity:.5;"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+        <p style="margin:0; font-weight:600;">No items found.</p>
+        ${currentSearchQuery ? `<button class="add-new" onclick="openAddModalWithSearch('${esc(currentSearchQuery)}')">+ Add "${esc(currentSearchQuery)}" as New Item</button>` : ''}
+      </div>`;
+    return;
+  }
+
+  filtered.forEach(item => {
+    const row = document.createElement('div');
+    row.className = 'item-row' + (item.orderQty > 0 ? ' active' : '');
+    row.innerHTML = `
+      <div class="item-thumb">
+        ${item.image ? `<img src="${item.image}">` : `<div class="cam"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></div>`}
+        <input type="file" accept="image/*" capture="environment" onchange="uploadItemImage(${item.id}, this)">
+      </div>
+      <div class="item-info">
+        <div class="item-cat">${esc(item.category)}</div>
+        <div class="item-name ${item.orderQty > 0 ? 'active' : ''} ${item.name.includes('(NEW)') ? 'new' : ''}">${esc(item.name)}</div>
+      </div>
+      <div class="qty-box">
+        <button class="qty-btn minus" onclick="changeQty(${item.id}, -1)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M5 12h14"/></svg></button>
+        <span class="qty-val ${item.orderQty > 0 ? 'active' : ''}">${item.orderQty}</span>
+        <button class="qty-btn plus" onclick="changeQty(${item.id}, 1)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
+      </div>`;
+    container.appendChild(row);
+  });
+}
+
+function changeQty(id, delta) {
+  catalog = catalog.map(item => item.id === id ? { ...item, orderQty: Math.max(0, item.orderQty + delta) } : item);
+  saveState();
+  renderItems();
+}
+
+function uploadItemImage(id, input) {
+  const file = input.files[0];
+  if (!file) return;
+  compressImage(file, function(dataUrl) {
+    catalog = catalog.map(item => item.id === id ? { ...item, image: dataUrl } : item);
+    saveState();
+    renderItems();
+  });
+}
+
+function handleSearch(val) {
+  currentSearchQuery = val;
+  const clearBtn = document.getElementById('clear-search');
+  clearBtn.style.display = val ? 'block' : 'none';
+  if (val && currentCategoryFilter !== 'All') currentCategoryFilter = 'All';
+  renderCategories();
+  renderItems();
+}
+
+function clearSearchField() {
+  document.getElementById('search-input').value = '';
+  handleSearch('');
+}
+
+function updateGlobalBadges() {
+  const total = catalog.reduce((s, i) => s + i.orderQty, 0);
+  const badge = document.getElementById('cart-count');
+  if (total > 0) { badge.innerText = total; badge.style.display = 'flex'; }
+  else { badge.style.display = 'none'; }
+  document.getElementById('print-header-count').innerText = `${total} Items in Order`;
+  document.getElementById('report-total').innerText = `Total Items: ${total}`;
+}
+
+function openAddModal() {
+  document.getElementById('add-modal').classList.remove('hidden');
+  const select = document.getElementById('new-item-cat');
+  select.innerHTML = '';
+  [...new Set(catalog.map(i => i.category))].forEach(cat => {
+    const opt = document.createElement('option');
+    opt.value = cat; opt.innerText = cat;
+    select.appendChild(opt);
+  });
+}
+
+function openAddModalWithSearch(text) {
+  openAddModal();
+  document.getElementById('new-item-name').value = text;
+}
+
+function closeAddModal() {
+  document.getElementById('add-modal').classList.add('hidden');
+  document.getElementById('new-item-name').value = '';
+  currentModalImageBase64 = null;
+  document.getElementById('modal-img-placeholder').classList.remove('hidden');
+  document.getElementById('modal-img-preview').classList.add('hidden');
+}
+
+function handleModalImage(input) {
+  const file = input.files[0];
+  if (!file) return;
+  compressImage(file, function(dataUrl) {
+    currentModalImageBase64 = dataUrl;
+    document.getElementById('modal-img-placeholder').classList.add('hidden');
+    const img = document.getElementById('modal-img-preview');
+    img.src = dataUrl;
+    img.classList.remove('hidden');
+  });
+}
+
+function submitNewItem() {
+  const name = document.getElementById('new-item-name').value.trim();
+  const cat = document.getElementById('new-item-cat').value;
+  if (!name) return;
+  catalog.unshift({ id: Date.now(), name: name + ' (NEW)', category: cat, orderQty: 1, image: currentModalImageBase64 });
+  saveState();
+  closeAddModal();
+  currentCategoryFilter = cat;
+  currentSearchQuery = '';
+  document.getElementById('search-input').value = '';
+  renderCategories();
+  renderItems();
+}
+
+function renderPrintReport() {
+  const container = document.getElementById('print-report-content');
+  container.innerHTML = '';
+  const ordered = catalog.filter(i => i.orderQty > 0);
+  if (ordered.length === 0) {
+    container.innerHTML = '<div class="empty-order">Your order is empty.<br>Go back and select some quantities.</div>';
+    return;
+  }
+  const groups = {};
+  ordered.forEach(i => { (groups[i.category] = groups[i.category] || []).push(i); });
+
+  function sectionHtml(category, items) {
+    let rows = '';
+    items.forEach(item => {
+      rows += `<tr>
+        <td><span class="qty-chip">${item.orderQty}</span></td>
+        <td>${esc(item.name)}</td>
+      </tr>`;
+    });
+    return `<div class="cat-section">
+      <h2 class="cat-title">${esc(category)}</h2>
+      <table>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`;
+  }
+
+  // Distribute categories across three columns, balancing by row count so all sides finish about evenly.
+  const entries = Object.entries(groups);
+  const colHtml = ['', '', ''];
+  const colCount = [0, 0, 0];
+  entries.forEach(([category, items]) => {
+    let target = 0;
+    for (let c = 1; c < colCount.length; c++) { if (colCount[c] < colCount[target]) target = c; }
+    colHtml[target] += sectionHtml(category, items);
+    colCount[target] += items.length + 1;
+  });
+
+  container.innerHTML = `
+    <div class="print-col">${colHtml[0]}</div>
+    <div class="print-col">${colHtml[1]}</div>
+    <div class="print-col">${colHtml[2]}</div>`;
+}
+
+function buildReportHtml() {
+  const ordered = catalog.filter(i => i.orderQty > 0);
+  const groups = {};
+  ordered.forEach(i => { (groups[i.category] = groups[i.category] || []).push(i); });
+  const entries = Object.entries(groups);
+
+  function sectionHtml(category, items) {
+    let rows = '';
+    items.forEach(item => {
+      rows += `<tr><td><span class="qty-chip">${item.orderQty}</span></td><td>${esc(item.name)}</td></tr>`;
+    });
+    return `<div class="cat-section"><h2 class="cat-title">${esc(category)}</h2><table><tbody>${rows}</tbody></table></div>`;
+  }
+
+  const colHtml = ['', '', ''];
+  const colCount = [0, 0, 0];
+  entries.forEach(([category, items]) => {
+    let target = 0;
+    for (let c = 1; c < colCount.length; c++) { if (colCount[c] < colCount[target]) target = c; }
+    colHtml[target] += sectionHtml(category, items);
+    colCount[target] += items.length + 1;
+  });
+
+  const total = ordered.reduce((s, i) => s + i.orderQty, 0);
+  const dateStr = new Date().toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
+  const bodyContent = ordered.length === 0
+    ? '<div style="text-align:center;padding:60px 20px;color:#8A8175;font-weight:600;">Your order is empty.</div>'
+    : `<div class="print-cols"><div class="print-col">${colHtml[0]}</div><div class="print-col">${colHtml[1]}</div><div class="print-col">${colHtml[2]}</div></div>`;
+
+  return `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>SuperOne Market Order</title>
+<style>
+  @page { margin: 9mm; }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif; color:#211D17; font-size:8pt; }
+  .display { font-family:Georgia,"Noto Serif",serif; }
+  .report-head { border-bottom:1.5pt solid #000; padding-bottom:4pt; margin-bottom:6pt; }
+  .report-head h1 { font-size:14pt; margin:0; }
+  .report-head h2 { font-size:8pt; font-weight:600; color:#8A8175; text-transform:uppercase; letter-spacing:.06em; margin:1pt 0 0; }
+  .report-meta { display:flex; justify-content:space-between; margin-top:3pt; font-size:8pt; font-weight:700; }
+  .print-cols { display:flex; gap:8pt; }
+  .print-col { flex:1; min-width:0; }
+  .cat-section { margin-bottom:6pt; break-inside:avoid; page-break-inside:avoid; }
+  .cat-title { font-family:Georgia,"Noto Serif",serif; font-size:8pt; font-weight:700; text-transform:uppercase; padding-bottom:1.5pt; margin:0 0 2pt; border-bottom:0.75pt solid #000; }
+  table { width:100%; border-collapse:collapse; }
+  td { padding:1.2pt 3pt; font-size:8pt; font-weight:600; border-bottom:0.5pt solid #E6DFCF; line-height:1.15; }
+  .qty-chip { display:inline-flex; align-items:center; justify-content:center; min-width:13pt; height:11pt; font-weight:800; font-size:7.5pt; border:0.75pt solid #000; border-radius:2pt; }
+</style></head>
+<body>
+  <div class="report-head">
+    <h1 class="display">SuperOne Market</h1>
+    <h2>Weekly Order Report</h2>
+    <div class="report-meta"><div>Date: ${dateStr}</div><div>Total Items: ${total}</div></div>
+  </div>
+  ${bodyContent}
+</body></html>`;
+}
+
+function saveOrderToHistory() {
+  const ordered = catalog.filter(i => i.orderQty > 0);
+  if (ordered.length === 0) return;
+  let history = [];
+  try { history = JSON.parse(safeStorage.getItem('superone_market_history') || '[]'); } catch (e) { history = []; }
+  history.unshift({
+    date: new Date().toISOString(),
+    totalCount: ordered.reduce((s, i) => s + i.orderQty, 0),
+    items: ordered.map(i => ({ name: i.name, category: i.category, qty: i.orderQty }))
+  });
+  if (history.length > 104) history = history.slice(0, 104); // keep ~2 years of weekly orders
+  safeStorage.setItem('superone_market_history', JSON.stringify(history));
+}
+
+function printOrder() {
+  const win = window.open('', '_blank');
+  if (!win) { alert('Please allow pop-ups for this app, then tap Print again.'); return; }
+  saveOrderToHistory();
+  win.document.open();
+  win.document.write(buildReportHtml());
+  win.document.close();
+  setTimeout(function() { win.focus(); win.print(); }, 250);
+}
+function renderHistory() {
+  const container = document.getElementById('history-list');
+  let history = [];
+  try { history = JSON.parse(safeStorage.getItem('superone_market_history') || '[]'); } catch (e) { history = []; }
+
+  if (history.length === 0) {
+    container.innerHTML = '<div class="empty-state"><p style="margin:0;font-weight:600;">No past orders yet.</p><p style="margin:6px 0 0;font-size:13px;">Each time you print an order, it gets saved here automatically.</p></div>';
+    return;
+  }
+
+  container.innerHTML = '';
+  history.forEach((order, idx) => {
+    const d = new Date(order.date);
+    const dateStr = d.toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
+    const card = document.createElement('div');
+    card.className = 'item-row';
+    card.style.cssText = 'flex-direction:column; align-items:stretch; margin-bottom:10px; cursor:pointer;';
+
+    let detailRows = '';
+    order.items.forEach(it => {
+      detailRows += `<tr><td style="width:34px;"><span class="qty-chip" style="min-width:24px;height:22px;font-size:13px;">${it.qty}</span></td><td>${esc(it.name)}</td><td style="color:var(--ink-soft);font-size:11px;text-transform:uppercase;">${esc(it.category)}</td></tr>`;
+    });
+
+    card.innerHTML = `
+      <div style="display:flex; justify-content:space-between; align-items:center;" onclick="toggleHistoryDetail(${idx})">
+        <div>
+          <div style="font-weight:700; font-size:15px;">${dateStr}</div>
+          <div style="font-size:12px; color:var(--ink-soft); font-weight:600;">${order.items.length} products, ${order.totalCount} total items</div>
+        </div>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+      </div>
+      <div id="hist-detail-${idx}" class="hidden" style="margin-top:10px; border-top:1.5px solid var(--line); padding-top:8px;">
+        <table style="width:100%;">${detailRows}</table>
+        <button onclick="loadPastOrder(${idx}); event.stopPropagation();" style="margin-top:10px; width:100%; background:var(--amber-tint); color:var(--amber-deep); font-weight:700; font-size:13px; border:1.5px solid var(--amber); border-radius:9px; padding:10px;">Load these quantities into this week's order</button>
+      </div>`;
+    container.appendChild(card);
+  });
+}
+
+function toggleHistoryDetail(idx) {
+  document.getElementById('hist-detail-' + idx).classList.toggle('hidden');
+}
+
+function loadPastOrder(idx) {
+  let history = [];
+  try { history = JSON.parse(safeStorage.getItem('superone_market_history') || '[]'); } catch (e) { return; }
+  const order = history[idx];
+  if (!order) return;
+  if (!confirm('Replace this week\'s quantities with the order from ' + new Date(order.date).toLocaleDateString() + '?')) return;
+  catalog = catalog.map(i => ({ ...i, orderQty: 0 }));
+  order.items.forEach(it => {
+    const match = catalog.find(c => c.name === it.name && c.category === it.category);
+    if (match) match.orderQty = it.qty;
+  });
+  saveState();
+  switchView('shop');
+}
+
+function switchView(target) {
+  document.getElementById('shop-view').classList.add('hidden');
+  document.getElementById('print-view').classList.add('hidden');
+  document.getElementById('history-view').classList.add('hidden');
+  if (target === 'print') {
+    document.getElementById('item-list').innerHTML = ''; // lighten the page for a fast print preview
+    document.getElementById('print-view').classList.remove('hidden');
+    document.getElementById('report-date').innerText = "Date: " + new Date().toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
+    renderPrintReport();
+  } else if (target === 'history') {
+    document.getElementById('item-list').innerHTML = '';
+    document.getElementById('history-view').classList.remove('hidden');
+    renderHistory();
+  } else {
+    document.getElementById('shop-view').classList.remove('hidden');
+    renderItems(); // restore the shop list
+  }
+  window.scrollTo(0,0);
+}
+
+function clearEntireOrder() {
+  if (confirm("Are you sure you want to completely clear this entire weekly order?")) {
+    catalog = catalog.map(i => ({ ...i, orderQty: 0 }));
+    saveState();
+    switchView('shop');
+    renderItems();
+  }
+}
+
+try {
+  renderCategories();
+  renderItems();
+  updateGlobalBadges();
+} catch (e) {
+  document.getElementById('item-list').innerHTML =
+    '<div class="empty-state">' +
+    '<p style="margin:0 0 4px;font-weight:700;">Something went wrong loading the item list.</p>' +
+    '<p style="margin:0 0 14px;font-size:13px;">' + esc(String(e && e.message || e)) + '</p>' +
+    '<button class="add-new" onclick="localStorage.clear();location.reload();">Reset app data and reload</button>' +
+    '</div>';
+}
+</script>
+</body>
+</html>

@@ -958,6 +958,7 @@ function renderHistory() {
       <div id="hist-detail-${idx}" class="hidden" style="margin-top:10px; border-top:1.5px solid var(--line); padding-top:8px;">
         <table style="width:100%;">${detailRows}</table>
         <div style="display:flex; gap:8px; margin-top:12px;">
+          <button onclick="histAddItem(${idx});event.stopPropagation();" style="flex:1; background:var(--amber-tint); color:var(--amber-deep); font-weight:700; font-size:13px; border:1.5px solid var(--amber); border-radius:9px; padding:11px;">+ Add item</button>
           <button onclick="printPastOrder(${idx});event.stopPropagation();" style="flex:1; background:var(--amber); color:#fff; font-weight:800; font-size:13px; border:none; border-radius:9px; padding:11px;">Print this order</button>
         </div>
         <button onclick="deleteHistoryEntry(${idx});event.stopPropagation();" style="margin-top:8px; width:100%; background:transparent; color:var(--red); font-weight:700; font-size:12px; border:1.5px solid var(--red); border-radius:9px; padding:9px;">Delete this saved order</button>
@@ -1007,8 +1008,39 @@ function reopenHistory() {
   if (el) el.classList.remove('hidden');
 }
 
-function deleteHistoryEntry(idx) {
+function histAddItem(idx) {
   const h = loadHistory();
+  if (!h[idx]) return;
+  const query = prompt('Add an item to this order.\nType part of the product name:');
+  if (!query || !query.trim()) return;
+  const q = query.trim().toLowerCase();
+  const matches = catalog.filter(i => i.name.toLowerCase().includes(q) || i.category.toLowerCase().includes(q));
+  if (matches.length === 0) { alert('No product found matching "' + query.trim() + '".'); return; }
+  let chosen;
+  if (matches.length === 1) {
+    chosen = matches[0];
+  } else {
+    const list = matches.slice(0, 20).map((m, i) => (i + 1) + '. ' + m.name + ' (' + m.category.replace('Cig - ', '') + ')').join('\n');
+    const pick = prompt('Multiple matches — type the number:\n\n' + list);
+    const n = parseInt(pick, 10);
+    if (isNaN(n) || n < 1 || n > matches.length) return;
+    chosen = matches[n - 1];
+  }
+  const qtyStr = prompt('Quantity for ' + chosen.name + ':', '1');
+  let qty = parseInt(qtyStr, 10);
+  if (isNaN(qty) || qty < 1) return;
+  // if already in the order, add to it; else push new line
+  const existing = h[idx].items.find(it => it.name === chosen.name && it.category === chosen.category);
+  if (existing) existing.qty += qty;
+  else h[idx].items.push({ name: chosen.name, category: chosen.category, qty: qty });
+  recalcOrder(h[idx]);
+  expandedHistoryIdx = idx;
+  writeHistory(h);
+  renderHistory();
+  reopenHistory();
+}
+
+function deleteHistoryEntry(idx) {  const h = loadHistory();
   if (!h[idx]) return;
   if (!confirm('Delete this saved order from ' + new Date(h[idx].date).toLocaleDateString() + '? This cannot be undone.')) return;
   h.splice(idx, 1);

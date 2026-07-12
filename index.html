@@ -33,74 +33,94 @@ if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
 }
 </script>
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="theme-color" content="#C6812C">
+<meta name="theme-color" content="#E9CF7A">
 <style>
   :root{
-    --paper:#F5F1E8;
+    --bg:#E9CF7A;
     --surface:#FFFFFF;
-    --ink:#211D17;
-    --ink-soft:#8A8175;
-    --line:#E6DFCF;
-    --amber:#C6812C;
-    --amber-deep:#9C5F1C;
-    --amber-tint:#FBEDD6;
-    --green:#3C6B4C;
-    --red:#A8402F;
-    --red-tint:#F5DFDA;
+    --ink:#2A2417;
+    --ink-soft:#8C8069;
+    --line:#EDE3C8;
+    --blue:#C79A1E;
+    --blue-deep:#A67F16;
+    --blue-tint:#FBF0C8;
+    --tang:#C79A1E;
+    --tang-deep:#A67F16;
+    --tang-tint:#FBF0C8;
+    --lime:#C79A1E;
+    --pink:#C79A1E;
+    --violet:#C79A1E;
+    --gold:#C79A1E;
+    --red:#C0392B;
+    --paper:#E9CF7A;
+    --amber:#C79A1E;
+    --amber-deep:#A67F16;
+    --amber-tint:#FBF0C8;
+    --green:#C79A1E;
   }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-  body { margin:0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background:var(--paper); color:var(--ink); padding-bottom:96px; }
+  body { margin:0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background:var(--bg); color:var(--ink); padding-bottom:96px; }
   .hidden { display:none !important; }
   .wrap { max-width:640px; margin:0 auto; }
-  .display { font-family: Georgia, "Times New Roman", "Noto Serif", serif; }
+  .display { font-family: "Trebuchet MS", "Segoe UI", system-ui, sans-serif; font-weight:800; letter-spacing:-.02em; }
 
   /* Header */
-  header { position:sticky; top:0; z-index:10; background:var(--paper); border-bottom:3px solid var(--ink); padding:16px 16px 10px; }
+  header { position:sticky; top:0; z-index:10; background:#E9CF7A; padding:16px 16px 12px; box-shadow:0 2px 10px rgba(160,120,20,.18); }
   .header-row { display:flex; justify-content:space-between; align-items:center; max-width:640px; margin:0 auto; gap:10px; }
   .title-block { display:flex; flex-direction:column; line-height:1.05; }
-  .eyebrow { font-size:10px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--amber-deep); margin-bottom:2px; }
-  .title { font-size:23px; font-weight:700; color:var(--ink); margin:0; letter-spacing:-.01em; }
+  .eyebrow { font-size:10px; font-weight:800; letter-spacing:.16em; text-transform:uppercase; color:#8A6B1E; margin-bottom:3px; }
+  .title { font-size:23px; font-weight:800; color:#4A3A1A; margin:0; letter-spacing:-.02em; }
   .header-btns { display:flex; gap:8px; flex-shrink:0; }
-  .icon-btn { background:var(--surface); color:var(--ink); border:1.5px solid var(--line); width:40px; height:40px; border-radius:10px; display:flex; align-items:center; justify-content:center; }
-  .print-btn { position:relative; background:var(--ink); color:var(--paper); border:none; padding:0 16px; height:40px; border-radius:10px; font-weight:700; font-size:13px; letter-spacing:.03em; text-transform:uppercase; display:flex; align-items:center; gap:7px; }
-  .cart-badge { display:none; position:absolute; top:-6px; right:-6px; background:var(--amber); color:#fff; font-size:11px; width:20px; height:20px; border-radius:50%; align-items:center; justify-content:center; font-weight:800; border:2px solid var(--paper); }
+  .icon-btn { background:rgba(74,58,26,.14); color:#4A3A1A; border:none; width:40px; height:40px; border-radius:11px; display:flex; align-items:center; justify-content:center; }
+  .print-btn { position:relative; background:#4A3A1A; color:#F7EDD4; border:none; padding:0 16px; height:40px; border-radius:11px; font-weight:800; font-size:13px; letter-spacing:.03em; text-transform:uppercase; display:flex; align-items:center; gap:7px; box-shadow:0 2px 8px rgba(74,58,26,.3); }
+  .cart-badge { display:none; position:absolute; top:-6px; right:-6px; background:var(--lime); color:#fff; font-size:11px; width:20px; height:20px; border-radius:50%; align-items:center; justify-content:center; font-weight:800; border:2px solid #fff; }
 
   .search-wrap { position:relative; max-width:640px; margin:12px auto 0; }
-  #search-input { width:100%; background:var(--surface); border:1.5px solid var(--line); padding:11px 34px 11px 36px; border-radius:10px; outline:none; font-size:14px; font-weight:500; color:var(--ink); }
-  #search-input:focus { border-color:var(--amber); }
-  #search-input::placeholder { color:var(--ink-soft); }
-  .search-icon { position:absolute; left:12px; top:50%; transform:translateY(-50%); color:var(--ink-soft); display:flex; }
+  #search-input { width:100%; background:rgba(255,255,255,.95); border:none; padding:12px 34px 12px 38px; border-radius:11px; outline:none; font-size:14px; font-weight:600; color:var(--ink); box-shadow:0 2px 8px rgba(20,23,38,.08); }
+  #search-input::placeholder { color:var(--ink-soft); font-weight:500; }
+  .search-icon { position:absolute; left:13px; top:50%; transform:translateY(-50%); color:var(--blue); display:flex; }
   .clear-btn { display:none; position:absolute; right:10px; top:50%; transform:translateY(-50%); background:none; border:none; color:var(--ink-soft); font-size:14px; font-weight:700; width:22px; height:22px; }
 
-  .pills { display:flex; overflow-x:auto; gap:6px; padding:12px 16px 10px; max-width:640px; margin:0 auto; scrollbar-width:none; }
+  .pills { display:flex; overflow-x:auto; gap:7px; padding:14px 16px 10px; max-width:640px; margin:0 auto; scrollbar-width:none; }
   .pills::-webkit-scrollbar { display:none; }
-  .pill { white-space:nowrap; padding:6px 13px; border-radius:8px; font-size:12.5px; font-weight:700; border:1.5px solid var(--line); background:var(--surface); color:var(--ink-soft); }
-  .pill.active { background:var(--amber); color:#fff; border-color:var(--amber); }
+  .pill { white-space:nowrap; padding:7px 14px; border-radius:20px; font-size:12.5px; font-weight:700; border:2px solid var(--line); background:var(--surface); color:var(--ink-soft); }
+  .pill.active { background:var(--blue); color:#fff; border-color:var(--blue); box-shadow:0 2px 8px rgba(31,58,95,.28); }
 
   /* Item list */
-  #item-list { padding:6px 16px 16px; display:flex; flex-direction:column; gap:9px; max-width:640px; margin:0 auto; }
-  .item-row { display:flex; align-items:center; justify-content:space-between; padding:10px; border-radius:12px; border:1.5px solid var(--line); background:var(--surface); }
-  .item-row.active { background:var(--amber-tint); border-color:var(--amber); }
-  .item-thumb { position:relative; width:50px; height:50px; border-radius:10px; overflow:hidden; border:1.5px solid var(--line); background:#EFEAE0; display:flex; flex-direction:column; align-items:center; justify-content:center; margin-right:10px; flex-shrink:0; }
+  #item-list { padding:8px 16px 16px; display:flex; flex-direction:column; gap:9px; max-width:640px; margin:0 auto; }
+  .item-row { display:flex; align-items:center; justify-content:space-between; padding:10px; border-radius:14px; border:2px solid var(--line); background:var(--surface); border-left-width:5px; box-shadow:0 1px 4px rgba(20,23,38,.04); transition:transform .08s ease; }
+  .item-row.active { background:var(--blue-tint); border-color:var(--blue); }
+  .item-thumb { position:relative; width:50px; height:50px; border-radius:11px; overflow:hidden; display:flex; flex-direction:column; align-items:center; justify-content:center; margin-right:11px; flex-shrink:0; color:#fff; font-weight:800; font-size:17px; }
   .item-thumb img { width:100%; height:100%; object-fit:cover; }
   .item-thumb input { position:absolute; inset:0; opacity:0; width:100%; height:100%; }
-  .item-thumb .cam { color:var(--ink-soft); display:flex; }
+  .item-thumb .cam { opacity:.85; display:flex; }
   .item-info { flex:1; min-width:0; padding-right:8px; }
-  .item-cat { font-size:9.5px; font-weight:700; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.08em; margin-bottom:2px; }
-  .item-name { font-weight:600; font-size:15.5px; line-height:1.25; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:var(--ink); }
-  .item-name.active { color:var(--amber-deep); font-weight:700; }
-  .item-name.new { color:var(--green); }
+  .item-cat { font-size:9.5px; font-weight:800; text-transform:uppercase; letter-spacing:.08em; margin-bottom:2px; }
+  .item-name { font-weight:600; font-size:15.5px; line-height:1.25; color:var(--ink); word-break:break-word; }
+  .item-name.active { font-weight:800; }
+  .item-name.new { color:var(--lime); }
 
-  .qty-box { display:flex; align-items:center; gap:0; background:var(--surface); border-radius:9px; border:1.5px solid var(--line); flex-shrink:0; overflow:hidden; }
-  .item-row.active .qty-box { border-color:var(--amber); }
-  .qty-btn { width:34px; height:34px; border:none; background:none; font-size:17px; font-weight:700; display:flex; align-items:center; justify-content:center; color:var(--ink); }
-  .qty-btn.minus { border-right:1.5px solid var(--line); }
-  .qty-btn.plus { border-left:1.5px solid var(--line); color:var(--amber-deep); }
-  .qty-val { width:26px; text-align:center; font-weight:800; font-size:17px; color:var(--ink); font-variant-numeric:tabular-nums; }
-  .qty-val.active { color:var(--amber-deep); }
+  .qty-box { display:flex; align-items:center; gap:0; background:var(--bg); border-radius:11px; flex-shrink:0; overflow:hidden; }
+  .qty-btn { width:36px; height:36px; border:none; font-size:18px; font-weight:800; display:flex; align-items:center; justify-content:center; }
+  .qty-btn.minus { background:#fff; color:var(--ink-soft); box-shadow:inset 0 0 0 2px var(--line); }
+  .qty-btn.plus { background:var(--lime); color:#fff; }
+  .item-row.active .qty-btn.plus { background:var(--blue); }
+  .qty-val { width:30px; text-align:center; font-weight:800; font-size:18px; color:var(--ink); font-variant-numeric:tabular-nums; }
+  .qty-val.active { color:var(--blue); }
 
   .empty-state { text-align:center; padding:56px 20px; color:var(--ink-soft); }
-  .empty-state .add-new { margin-top:14px; color:var(--amber-deep); font-weight:700; background:var(--amber-tint); padding:9px 18px; border-radius:9px; font-size:13.5px; display:inline-block; border:none; }
+  .empty-state .add-new { margin-top:14px; color:#fff; font-weight:700; background:var(--blue); padding:10px 20px; border-radius:20px; font-size:13.5px; display:inline-block; border:none; box-shadow:0 2px 8px rgba(31,58,95,.28); }
+
+  /* Cigarette brand sub-categories */
+  .cig-group { margin-bottom:9px; }
+  .cig-head { width:100%; display:flex; align-items:center; gap:11px; padding:11px 12px; border-radius:14px; border:2px solid var(--line); background:var(--surface); text-align:left; box-shadow:0 1px 4px rgba(28,26,23,.04); }
+  .cig-head.open { border-color:var(--blue); background:var(--blue-tint); }
+  .cig-dot { width:40px; height:40px; border-radius:11px; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:800; font-size:15px; flex-shrink:0; }
+  .cig-name { flex:1; font-weight:800; font-size:16px; color:var(--ink); }
+  .cig-count { background:var(--lime); color:#fff; font-weight:800; font-size:12px; min-width:22px; height:22px; border-radius:11px; display:flex; align-items:center; justify-content:center; padding:0 6px; }
+  .cig-chevron { color:var(--ink-soft); transition:transform .15s ease; flex-shrink:0; }
+  .cig-head.open .cig-chevron { transform:rotate(90deg); }
+  .cig-items { display:flex; flex-direction:column; gap:9px; padding:9px 0 4px 12px; }
 
   /* Modal */
   .modal-bg { position:fixed; inset:0; background:rgba(33,29,23,.55); z-index:50; display:flex; align-items:flex-end; justify-content:center; padding:16px; }
@@ -115,15 +135,15 @@ if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
   label.field-label { display:block; font-size:12.5px; font-weight:700; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.05em; margin-bottom:6px; }
   .field-input, .field-select { width:100%; padding:12px 14px; background:var(--surface); border:1.5px solid var(--line); border-radius:10px; font-size:16px; font-weight:500; color:var(--ink); margin-bottom:14px; }
   .field-input:focus, .field-select:focus { outline:none; border-color:var(--amber); }
-  .submit-btn { width:100%; background:var(--ink); color:var(--paper); font-weight:700; font-size:15px; text-transform:uppercase; letter-spacing:.03em; padding:14px; border:none; border-radius:10px; }
+  .submit-btn { width:100%; background:var(--tang); color:#fff; font-weight:800; font-size:15px; text-transform:uppercase; letter-spacing:.03em; padding:14px; border:none; border-radius:11px; box-shadow:0 2px 8px rgba(184,84,46,.35); }
 
   /* Print view */
-  #print-view .toolbar { position:sticky; top:0; background:var(--ink); color:var(--paper); padding:14px 16px; display:flex; flex-direction:column; gap:12px; z-index:20; }
+  .toolbar { position:sticky; top:0; background:#E9CF7A; color:#2A2417; padding:14px 16px; display:flex; flex-direction:column; gap:12px; z-index:20; }
   .toolbar-top { display:flex; justify-content:space-between; align-items:center; max-width:640px; margin:0 auto; width:100%; }
-  .back-btn { background:none; border:none; color:#C9C1B2; font-weight:600; font-size:14px; display:flex; align-items:center; gap:4px; padding:0; }
+  .back-btn { background:none; border:none; color:#7A5E22; font-weight:700; font-size:14px; display:flex; align-items:center; gap:4px; padding:0; }
   .toolbar-actions { display:flex; gap:10px; max-width:640px; margin:0 auto; width:100%; }
-  .btn-print { flex:1; background:var(--amber); color:#fff; border:none; padding:13px; border-radius:10px; font-weight:700; text-transform:uppercase; letter-spacing:.03em; display:flex; align-items:center; justify-content:center; gap:7px; font-size:14px; }
-  .btn-clear { background:rgba(168,64,47,.25); color:#E8A99C; border:none; padding:0 16px; border-radius:10px; display:flex; align-items:center; }
+  .btn-print { flex:1; background:#4A3A1A; color:#F7EDD4; border:none; padding:13px; border-radius:10px; font-weight:800; text-transform:uppercase; letter-spacing:.03em; display:flex; align-items:center; justify-content:center; gap:7px; font-size:14px; }
+  .btn-clear { background:rgba(74,58,26,.16); color:#7A5E22; border:none; padding:0 16px; border-radius:10px; display:flex; align-items:center; }
 
   .report { background:var(--surface); padding:20px 16px; max-width:680px; margin:0 auto; }
   .report-head { border-bottom:3px solid var(--ink); padding-bottom:14px; margin-bottom:22px; }
@@ -285,7 +305,18 @@ const initialData = {
   "Other Wraps": ["Lava Kush - Lava Trufflez", "LIT - Mango", "LIT - Maui", "LIT - Purp", "Camo - Naked", "Camo - Russian", "Camo - Honey", "Camo - Goji", "Camo - Passion", "Camo - Vanilla", "Camo - Natural", "Harvest Hemp", "True Hemp", "Natty - Natural", "Natty - Pineapple", "Natty - Watermelon", "Wild Hemp - Natural", "Wild Hemp - Diamond"],
   "RAW & Papers": ["RAW 1.25", "RAW 1.5", "RAW King Slim", "RAW King Jumbo", "RAW Tips", "RAW 20pk King", "RAW 20pk 1.25", "RAW Cones 6pk", "RAW Cones 3pk", "Joker 1.25", "Joker 1.5", "Blizzy - Orig", "Blizzy - Russian"],
   "Vapes": ["Geekbars - Miami", "Geekbars - Frz Wtr", "Geekbars - Bl Razz", "Geekbars - Blkbry Bpop", "Breeze - Cherry Lem", "Breeze - Blue Mint", "Breeze - Spearmint", "Breeze - Banana Mint", "Breeze - Blue Razz", "Breeze - Blue Banana", "Breeze - Strw Peach", "Breeze - Pineapple Coco", "Breeze - Pomegranate", "Breeze - Citrus", "Breeze - OR Mango"],
-  "Cigarettes": ["Newport - Box 100s", "Newport - Classic Box (King)", "Newport - Menthol Gold Box", "Newport - Non-Menthol Box 100s", "Newport - Smooth Gold Box", "Camel - Crush Menthol", "Camel - One Crush 100s Menthol", "Camel - Jade Silver", "Lucky Strike - Red Box", "Lucky Strike - Menthol", "Lucky Strike - Menthol 100s", "Pall Mall - Select Blue", "Pall Mall - Select Blue 100s", "Pall Mall - Select Red 100s", "Pall Mall - Select Menthol", "Pall Mall - Select Menthol 100s", "Kool - Filter Kings", "Kool - Blue Box", "Kool - Super Longs Box", "Kool - Black", "Kool - Black 100s", "Winston - Select", "Maverick - Menthol Box", "Maverick - Menthol Box 100s", "Maverick - Red Box 100s", "Maverick - Menthol Gold Box 100s", "Maverick - Gold Box 100s", "Crowns - Green", "Crowns - Red", "Salem - Box", "Salem - Gold Box", "Salem - Slim 100s", "Salem - 100s Box", "Hat's Off - Strong Menthol", "Misty - 100s", "Misty - 120s", "Marlboro - Red Box", "Marlboro - Red 100s", "Marlboro - Gold Pack", "Marlboro - Gold Pack 100s", "Marlboro - 100s"],
+  "Cig - Newport": ["Box 100s", "Classic Box (King)", "Menthol Gold Box", "Non-Menthol Box 100s", "Smooth Gold Box"],
+  "Cig - Marlboro": ["Red Box", "Red 100s", "Gold Pack", "Gold Pack 100s", "100s"],
+  "Cig - Camel": ["Crush Menthol", "One Crush 100s Menthol", "Jade Silver"],
+  "Cig - Pall Mall": ["Select Blue", "Select Blue 100s", "Select Red 100s", "Select Menthol", "Select Menthol 100s"],
+  "Cig - Kool": ["Filter Kings", "Blue Box", "Super Longs Box", "Black", "Black 100s"],
+  "Cig - Maverick": ["Menthol Box", "Menthol Box 100s", "Red Box 100s", "Menthol Gold Box 100s", "Gold Box 100s"],
+  "Cig - Salem": ["Box", "Gold Box", "Slim 100s", "100s Box"],
+  "Cig - Lucky Strike": ["Red Box", "Menthol", "Menthol 100s"],
+  "Cig - Misty": ["100s", "120s"],
+  "Cig - Winston": ["Select"],
+  "Cig - Crowns": ["Green", "Red"],
+  "Cig - Hat's Off": ["Strong Menthol"],
   "Misc & Store": ["Pickles - Hot", "Pickles - Kosher", "Pickles - Dill", "Gum - Doublemint", "Gum - Spearmint", "Gum - Juicy Frt", "Gum - Winterfresh", "Gum - Big Red", "Toothbrushes (10)", "Toothpaste", "Vaseline (50ml)", "Axe", "Slimelicker", "Tshirts/Thermals", "Cheap Prerolls"]
 };
 
@@ -368,7 +399,11 @@ try {
 let currentCategoryFilter = 'All';
 let currentSearchQuery = '';
 let currentModalImageBase64 = null;
-const categoriesList = ['All', ...Object.keys(initialData)];
+const rawCategories = Object.keys(initialData);
+const cigBrands = rawCategories.filter(c => c.indexOf('Cig - ') === 0);
+const nonCigCategories = rawCategories.filter(c => c.indexOf('Cig - ') !== 0);
+// Pill row: all non-cigarette categories, plus one combined "Cigarettes" tab.
+const categoriesList = ['All', ...nonCigCategories, 'Cigarettes'];
 
 // One-time cleanup: any photo saved before compression was added is still
 // full camera resolution and can be several MB — that's the usual cause of
@@ -397,6 +432,21 @@ function migrateOversizedImages() {
 try { migrateOversizedImages(); } catch (e) { /* non-fatal, item photos just won't be optimized this run */ }
 
 function esc(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// Give each category a consistent signature color so the list reads like a
+// colorful shelf. Colors are assigned by hashing the category name to a fixed palette.
+const CAT_PALETTE = ['#B8912F'];
+function catColor(cat) {
+  let h = 0;
+  for (let i = 0; i < cat.length; i++) h = (h * 31 + cat.charCodeAt(i)) >>> 0;
+  return CAT_PALETTE[h % CAT_PALETTE.length];
+}
+function catInitials(cat) {
+  const clean = cat.replace(/^Cig - /, '');
+  const words = clean.split(/[\s&-]+/).filter(Boolean);
+  if (words.length >= 2) return (words[0][0] + words[1][0]).toUpperCase();
+  return clean.slice(0, 2).toUpperCase();
+}
 
 // Shrinks any photo down to a small thumbnail before it's stored, so saving
 // stays instant even after adding lots of photos (full camera photos are
@@ -435,6 +485,7 @@ function renderCategories() {
     btn.onclick = () => {
       currentCategoryFilter = cat;
       currentSearchQuery = '';
+      expandedCigBrand = null;
       document.getElementById('search-input').value = '';
       document.getElementById('clear-search').style.display = 'none';
       renderCategories();
@@ -444,13 +495,63 @@ function renderCategories() {
   });
 }
 
+function itemRowHtml(item) {
+  const color = catColor(item.category);
+  const displayCat = item.category.indexOf('Cig - ') === 0 ? item.category.slice(6) : item.category;
+  return `<div class="item-row${item.orderQty > 0 ? ' active' : ''}" style="${item.orderQty > 0 ? '' : 'border-left-color:' + color + ';'}">
+      <div class="item-thumb" style="background:${item.image ? 'transparent' : color};">
+        ${item.image ? `<img src="${item.image}">` : `<span>${esc(catInitials(item.category))}</span>`}
+        <input type="file" accept="image/*" capture="environment" onchange="uploadItemImage(${item.id}, this)">
+      </div>
+      <div class="item-info">
+        <div class="item-cat" style="color:${color};">${esc(displayCat)}</div>
+        <div class="item-name ${item.orderQty > 0 ? 'active' : ''} ${item.name.includes('(NEW)') ? 'new' : ''}">${esc(item.name)}</div>
+      </div>
+      <div class="qty-box">
+        <button class="qty-btn minus" onclick="changeQty(${item.id}, -1)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M5 12h14"/></svg></button>
+        <span class="qty-val ${item.orderQty > 0 ? 'active' : ''}">${item.orderQty}</span>
+        <button class="qty-btn plus" onclick="changeQty(${item.id}, 1)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
+      </div>
+    </div>`;
+}
+
+let expandedCigBrand = null;
+
 function renderItems() {
   const container = document.getElementById('item-list');
   container.innerHTML = '';
+  const q = currentSearchQuery.toLowerCase();
+
+  // Special two-level view: the Cigarettes tab groups items by brand sub-category.
+  if (currentCategoryFilter === 'Cigarettes' && !currentSearchQuery) {
+    let html = '';
+    cigBrands.forEach(brand => {
+      const brandName = brand.slice(6);
+      const items = catalog.filter(i => i.category === brand);
+      if (items.length === 0) return;
+      const color = catColor(brand);
+      const brandTotal = items.reduce((s, i) => s + i.orderQty, 0);
+      const isOpen = expandedCigBrand === brand;
+      html += `<div class="cig-group">
+        <button class="cig-head${isOpen ? ' open' : ''}" onclick="toggleCigBrand('${esc(brand)}')">
+          <span class="cig-dot" style="background:${color};">${esc(catInitials(brand))}</span>
+          <span class="cig-name">${esc(brandName)}</span>
+          ${brandTotal > 0 ? `<span class="cig-count">${brandTotal}</span>` : ''}
+          <svg class="cig-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+        </button>
+        ${isOpen ? `<div class="cig-items">${items.map(itemRowHtml).join('')}</div>` : ''}
+      </div>`;
+    });
+    container.innerHTML = html || '<div class="empty-state"><p style="margin:0;font-weight:600;">No cigarettes found.</p></div>';
+    return;
+  }
+
   const filtered = catalog.filter(item => {
-    const q = currentSearchQuery.toLowerCase();
     const matchesSearch = item.name.toLowerCase().includes(q) || item.category.toLowerCase().includes(q);
-    const matchesCat = currentCategoryFilter === 'All' || item.category === currentCategoryFilter;
+    let matchesCat;
+    if (currentCategoryFilter === 'All') matchesCat = true;
+    else if (currentCategoryFilter === 'Cigarettes') matchesCat = item.category.indexOf('Cig - ') === 0;
+    else matchesCat = item.category === currentCategoryFilter;
     return matchesSearch && matchesCat;
   });
 
@@ -463,25 +564,12 @@ function renderItems() {
     return;
   }
 
-  filtered.forEach(item => {
-    const row = document.createElement('div');
-    row.className = 'item-row' + (item.orderQty > 0 ? ' active' : '');
-    row.innerHTML = `
-      <div class="item-thumb">
-        ${item.image ? `<img src="${item.image}">` : `<div class="cam"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></div>`}
-        <input type="file" accept="image/*" capture="environment" onchange="uploadItemImage(${item.id}, this)">
-      </div>
-      <div class="item-info">
-        <div class="item-cat">${esc(item.category)}</div>
-        <div class="item-name ${item.orderQty > 0 ? 'active' : ''} ${item.name.includes('(NEW)') ? 'new' : ''}">${esc(item.name)}</div>
-      </div>
-      <div class="qty-box">
-        <button class="qty-btn minus" onclick="changeQty(${item.id}, -1)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M5 12h14"/></svg></button>
-        <span class="qty-val ${item.orderQty > 0 ? 'active' : ''}">${item.orderQty}</span>
-        <button class="qty-btn plus" onclick="changeQty(${item.id}, 1)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
-      </div>`;
-    container.appendChild(row);
-  });
+  container.innerHTML = filtered.map(itemRowHtml).join('');
+}
+
+function toggleCigBrand(brand) {
+  expandedCigBrand = (expandedCigBrand === brand) ? null : brand;
+  renderItems();
 }
 
 function changeQty(id, delta) {
@@ -627,7 +715,8 @@ function buildReportHtml() {
     items.forEach(item => {
       rows += `<tr><td><span class="qty-chip">${item.orderQty}</span></td><td>${esc(item.name)}</td></tr>`;
     });
-    return `<div class="cat-section"><h2 class="cat-title">${esc(category)}</h2><table><tbody>${rows}</tbody></table></div>`;
+    const label = category.indexOf('Cig - ') === 0 ? category.slice(6) : category;
+    return `<div class="cat-section"><h2 class="cat-title">${esc(label)}</h2><table><tbody>${rows}</tbody></table></div>`;
   }
 
   // Distribute a set of categories across 3 balanced columns and return the page HTML.
@@ -643,11 +732,11 @@ function buildReportHtml() {
     return `<div class="print-cols"><div class="print-col">${colHtml[0]}</div><div class="print-col">${colHtml[1]}</div><div class="print-col">${colHtml[2]}</div></div>`;
   }
 
-  // Separate cigarettes from everything else.
+  // Separate cigarettes (any "Cig - Brand" category) from everything else.
   const frontEntries = [];
   const cigEntries = [];
   Object.entries(groups).forEach(entry => {
-    if (entry[0] === 'Cigarettes') cigEntries.push(entry);
+    if (entry[0].indexOf('Cig - ') === 0) cigEntries.push(entry);
     else frontEntries.push(entry);
   });
 
@@ -673,7 +762,7 @@ function buildReportHtml() {
         <div class="report-head">
           <h1 class="display">SuperOne Market</h1>
           <h2>Weekly Order Report &mdash; Cigarettes</h2>
-          <div class="report-meta"><div>Date: ${dateStr}</div><div>Cigarette Items: ${cigEntries[0][1].reduce((s,i)=>s+i.orderQty,0)}</div></div>
+          <div class="report-meta"><div>Date: ${dateStr}</div><div>Cigarette Items: ${cigEntries.reduce((s,e)=>s+e[1].reduce((a,i)=>a+i.orderQty,0),0)}</div></div>
         </div>
         ${buildPage(cigEntries)}
       </div>`;

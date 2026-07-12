@@ -95,6 +95,8 @@ if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
   .item-thumb input { position:absolute; inset:0; opacity:0; width:100%; height:100%; }
   .item-thumb .cam { opacity:.85; display:flex; }
   .item-info { flex:1; min-width:0; padding-right:8px; }
+  .edit-btn { flex-shrink:0; width:32px; height:32px; margin-right:6px; border:none; background:transparent; color:var(--ink-soft); display:flex; align-items:center; justify-content:center; border-radius:8px; }
+  .edit-btn:active { background:var(--line); }
   .item-cat { font-size:9.5px; font-weight:800; text-transform:uppercase; letter-spacing:.08em; margin-bottom:2px; }
   .item-name { font-weight:600; font-size:15.5px; line-height:1.25; color:var(--ink); word-break:break-word; }
   .item-name.active { font-weight:800; }
@@ -508,6 +510,9 @@ function itemRowHtml(item) {
         <div class="item-cat" style="color:${color};">${esc(displayCat)}</div>
         <div class="item-name ${item.orderQty > 0 ? 'active' : ''} ${item.name.includes('(NEW)') ? 'new' : ''}">${esc(item.name)}</div>
       </div>
+      <button class="edit-btn" onclick="itemActions(${item.id})" title="Edit or delete">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+      </button>
       <div class="qty-box">
         <button class="qty-btn minus" onclick="changeQty(${item.id}, -1)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M5 12h14"/></svg></button>
         <input class="qty-val ${item.orderQty > 0 ? 'active' : ''}" type="text" inputmode="numeric" pattern="[0-9]*" value="${item.orderQty}" onfocus="this.select()" onchange="setQty(${item.id}, this.value)" onblur="setQty(${item.id}, this.value)">
@@ -588,6 +593,27 @@ function setQty(id, value) {
   catalog = catalog.map(i => i.id === id ? { ...i, orderQty: n } : i);
   saveState();
   renderItems();
+}
+
+function itemActions(id) {
+  const item = catalog.find(i => i.id === id);
+  if (!item) return;
+  const choice = prompt('Edit "' + item.name + '"\n\nType a new name to rename it, or type DELETE to remove it. Leave unchanged to cancel.', item.name);
+  if (choice === null) return; // cancelled
+  const trimmed = choice.trim();
+  if (trimmed.toUpperCase() === 'DELETE') {
+    if (confirm('Delete "' + item.name + '" from the list?')) {
+      catalog = catalog.filter(i => i.id !== id);
+      saveState();
+      renderItems();
+    }
+    return;
+  }
+  if (trimmed && trimmed !== item.name) {
+    catalog = catalog.map(i => i.id === id ? { ...i, name: trimmed } : i);
+    saveState();
+    renderItems();
+  }
 }
 
 function uploadItemImage(id, input) {

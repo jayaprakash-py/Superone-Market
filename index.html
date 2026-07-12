@@ -285,6 +285,7 @@ const initialData = {
   "Other Wraps": ["Lava Kush - Lava Trufflez", "LIT - Mango", "LIT - Maui", "LIT - Purp", "Camo - Naked", "Camo - Russian", "Camo - Honey", "Camo - Goji", "Camo - Passion", "Camo - Vanilla", "Camo - Natural", "Harvest Hemp", "True Hemp", "Natty - Natural", "Natty - Pineapple", "Natty - Watermelon", "Wild Hemp - Natural", "Wild Hemp - Diamond"],
   "RAW & Papers": ["RAW 1.25", "RAW 1.5", "RAW King Slim", "RAW King Jumbo", "RAW Tips", "RAW 20pk King", "RAW 20pk 1.25", "RAW Cones 6pk", "RAW Cones 3pk", "Joker 1.25", "Joker 1.5", "Blizzy - Orig", "Blizzy - Russian"],
   "Vapes": ["Geekbars - Miami", "Geekbars - Frz Wtr", "Geekbars - Bl Razz", "Geekbars - Blkbry Bpop", "Breeze - Cherry Lem", "Breeze - Blue Mint", "Breeze - Spearmint", "Breeze - Banana Mint", "Breeze - Blue Razz", "Breeze - Blue Banana", "Breeze - Strw Peach", "Breeze - Pineapple Coco", "Breeze - Pomegranate", "Breeze - Citrus", "Breeze - OR Mango"],
+  "Cigarettes": ["Newport - Box 100s", "Newport - Classic Box (King)", "Newport - Menthol Gold Box", "Newport - Non-Menthol Box 100s", "Newport - Smooth Gold Box", "Camel - Crush Menthol", "Camel - One Crush 100s Menthol", "Camel - Jade Silver", "Lucky Strike - Red Box", "Lucky Strike - Menthol", "Lucky Strike - Menthol 100s", "Pall Mall - Select Blue", "Pall Mall - Select Blue 100s", "Pall Mall - Select Red 100s", "Pall Mall - Select Menthol", "Pall Mall - Select Menthol 100s", "Kool - Filter Kings", "Kool - Blue Box", "Kool - Super Longs Box", "Kool - Black", "Kool - Black 100s", "Winston - Select", "Maverick - Menthol Box", "Maverick - Menthol Box 100s", "Maverick - Red Box 100s", "Maverick - Menthol Gold Box 100s", "Maverick - Gold Box 100s", "Crowns - Green", "Crowns - Red", "Salem - Box", "Salem - Gold Box", "Salem - Slim 100s", "Salem - 100s Box", "Hat's Off - Strong Menthol", "Misty - 100s", "Misty - 120s", "Marlboro - Red Box", "Marlboro - Red 100s", "Marlboro - Gold Pack", "Marlboro - Gold Pack 100s", "Marlboro - 100s"],
   "Misc & Store": ["Pickles - Hot", "Pickles - Kosher", "Pickles - Dill", "Gum - Doublemint", "Gum - Spearmint", "Gum - Juicy Frt", "Gum - Winterfresh", "Gum - Big Red", "Toothbrushes (10)", "Toothpaste", "Vaseline (50ml)", "Axe", "Slimelicker", "Tshirts/Thermals", "Cheap Prerolls"]
 };
 
@@ -620,7 +621,6 @@ function buildReportHtml() {
   const ordered = catalog.filter(i => i.orderQty > 0);
   const groups = {};
   ordered.forEach(i => { (groups[i.category] = groups[i.category] || []).push(i); });
-  const entries = Object.entries(groups);
 
   function sectionHtml(category, items) {
     let rows = '';
@@ -630,20 +630,55 @@ function buildReportHtml() {
     return `<div class="cat-section"><h2 class="cat-title">${esc(category)}</h2><table><tbody>${rows}</tbody></table></div>`;
   }
 
-  const colHtml = ['', '', ''];
-  const colCount = [0, 0, 0];
-  entries.forEach(([category, items]) => {
-    let target = 0;
-    for (let c = 1; c < colCount.length; c++) { if (colCount[c] < colCount[target]) target = c; }
-    colHtml[target] += sectionHtml(category, items);
-    colCount[target] += items.length + 1;
+  // Distribute a set of categories across 3 balanced columns and return the page HTML.
+  function buildPage(entries) {
+    const colHtml = ['', '', ''];
+    const colCount = [0, 0, 0];
+    entries.forEach(([category, items]) => {
+      let target = 0;
+      for (let c = 1; c < colCount.length; c++) { if (colCount[c] < colCount[target]) target = c; }
+      colHtml[target] += sectionHtml(category, items);
+      colCount[target] += items.length + 1;
+    });
+    return `<div class="print-cols"><div class="print-col">${colHtml[0]}</div><div class="print-col">${colHtml[1]}</div><div class="print-col">${colHtml[2]}</div></div>`;
+  }
+
+  // Separate cigarettes from everything else.
+  const frontEntries = [];
+  const cigEntries = [];
+  Object.entries(groups).forEach(entry => {
+    if (entry[0] === 'Cigarettes') cigEntries.push(entry);
+    else frontEntries.push(entry);
   });
 
   const total = ordered.reduce((s, i) => s + i.orderQty, 0);
   const dateStr = new Date().toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
-  const bodyContent = ordered.length === 0
-    ? '<div style="text-align:center;padding:60px 20px;color:#8A8175;font-weight:600;">Your order is empty.</div>'
-    : `<div class="print-cols"><div class="print-col">${colHtml[0]}</div><div class="print-col">${colHtml[1]}</div><div class="print-col">${colHtml[2]}</div></div>`;
+
+  let bodyContent;
+  if (ordered.length === 0) {
+    bodyContent = '<div style="text-align:center;padding:60px 20px;color:#8A8175;font-weight:600;">Your order is empty.</div>';
+  } else {
+    // Front page: everything except cigarettes.
+    bodyContent = `<div class="page">
+      <div class="report-head">
+        <h1 class="display">SuperOne Market</h1>
+        <h2>Weekly Order Report &mdash; Cigars &amp; Wraps</h2>
+        <div class="report-meta"><div>Date: ${dateStr}</div><div>Total Items: ${total}</div></div>
+      </div>
+      ${frontEntries.length ? buildPage(frontEntries) : '<div style="color:#8A8175;font-weight:600;padding:20pt 0;">No cigar/wrap items this order.</div>'}
+    </div>`;
+    // Back page (only if there are cigarette items): forced page break so it prints on the reverse side when duplex.
+    if (cigEntries.length) {
+      bodyContent += `<div class="page page-break">
+        <div class="report-head">
+          <h1 class="display">SuperOne Market</h1>
+          <h2>Weekly Order Report &mdash; Cigarettes</h2>
+          <div class="report-meta"><div>Date: ${dateStr}</div><div>Cigarette Items: ${cigEntries[0][1].reduce((s,i)=>s+i.orderQty,0)}</div></div>
+        </div>
+        ${buildPage(cigEntries)}
+      </div>`;
+    }
+  }
 
   return `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>SuperOne Market Order</title>
 <style>
@@ -651,6 +686,7 @@ function buildReportHtml() {
   * { box-sizing:border-box; }
   body { margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif; color:#211D17; font-size:8pt; }
   .display { font-family:Georgia,"Noto Serif",serif; }
+  .page-break { break-before:page; page-break-before:always; }
   .report-head { border-bottom:1.5pt solid #000; padding-bottom:4pt; margin-bottom:6pt; }
   .report-head h1 { font-size:14pt; margin:0; }
   .report-head h2 { font-size:8pt; font-weight:600; color:#8A8175; text-transform:uppercase; letter-spacing:.06em; margin:1pt 0 0; }
@@ -664,11 +700,6 @@ function buildReportHtml() {
   .qty-chip { display:inline-flex; align-items:center; justify-content:center; min-width:13pt; height:11pt; font-weight:800; font-size:7.5pt; border:0.75pt solid #000; border-radius:2pt; }
 </style></head>
 <body>
-  <div class="report-head">
-    <h1 class="display">SuperOne Market</h1>
-    <h2>Weekly Order Report</h2>
-    <div class="report-meta"><div>Date: ${dateStr}</div><div>Total Items: ${total}</div></div>
-  </div>
   ${bodyContent}
 </body></html>`;
 }

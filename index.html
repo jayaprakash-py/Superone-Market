@@ -326,6 +326,7 @@ const initialData = {
   "Cig - Winston": ["Select Kings"],
   "Cig - Crowns": ["Green 100s", "Red 100s"],
   "Cig - Hat's Off": ["Strong Menthol Kings", "Original Green Kings"],
+  "Medicine": ["Pepto Bismol Chewables", "NyQuil Severe", "DayQuil Severe", "Advil PM", "Advil", "Tylenol Extra Strength", "Tylenol PM", "Tylenol Sinus Severe", "Tylenol Cold + Flu Severe", "Midol Complete", "Alka-Seltzer Original", "Alka-Seltzer Plus Severe", "Excedrin Extra Strength", "Pepcid Complete", "Motrin IB", "Excedrin Migraine", "Bayer Aspirin", "Claritin", "Aleve", "Benadryl Allergy"],
   "Misc & Store": ["Pickles - Hot", "Pickles - Kosher", "Pickles - Dill", "Gum - Doublemint", "Gum - Spearmint", "Gum - Juicy Frt", "Gum - Winterfresh", "Gum - Big Red", "Toothbrushes (10)", "Toothpaste", "Vaseline (50ml)", "Axe", "Slimelicker", "Tshirts/Thermals", "Cheap Prerolls"]
 };
 
@@ -818,41 +819,38 @@ function buildReportHtml() {
     return `<div class="print-cols"><div class="print-col">${colHtml[0]}</div><div class="print-col">${colHtml[1]}</div><div class="print-col">${colHtml[2]}</div></div>`;
   }
 
-  // Separate cigarettes (any "Cig - Brand" category) from everything else.
-  const frontEntries = [];
+  // Group by supplier for labeling, but keep everything on one page.
+  const sunshineEntries = [];
   const cigEntries = [];
+  const miscEntries = [];
   Object.entries(groups).forEach(entry => {
     if (entry[0].indexOf('Cig - ') === 0) cigEntries.push(entry);
-    else frontEntries.push(entry);
+    else if (entry[0] === 'Misc & Store') miscEntries.push(entry);
+    else sunshineEntries.push(entry);
   });
 
   const total = ordered.reduce((s, i) => s + i.orderQty, 0);
   const dateStr = new Date().toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
 
+  function supplierBlock(label, entries) {
+    if (!entries.length) return '';
+    return `<div class="supplier-band">${label}</div>${buildPage(entries)}`;
+  }
+
   let bodyContent;
   if (ordered.length === 0) {
     bodyContent = '<div style="text-align:center;padding:60px 20px;color:#8A8175;font-weight:600;">Your order is empty.</div>';
   } else {
-    // Front page: everything except cigarettes.
     bodyContent = `<div class="page">
       <div class="report-head">
         <h1 class="display">SuperOne Market</h1>
-        <h2>Weekly Order Report &mdash; Cigars &amp; Wraps</h2>
+        <h2>Weekly Order Report</h2>
         <div class="report-meta"><div>Date: ${dateStr}</div><div>Total Items: ${total}</div></div>
       </div>
-      ${frontEntries.length ? buildPage(frontEntries) : '<div style="color:#8A8175;font-weight:600;padding:20pt 0;">No cigar/wrap items this order.</div>'}
+      ${supplierBlock('SUPPLIER: SUNSHINE', sunshineEntries)}
+      ${supplierBlock('CIGARETTES &middot; SUPPLIER: GUMMER', cigEntries)}
+      ${supplierBlock('MISC &amp; STORE', miscEntries)}
     </div>`;
-    // Back page (only if there are cigarette items): forced page break so it prints on the reverse side when duplex.
-    if (cigEntries.length) {
-      bodyContent += `<div class="page page-break">
-        <div class="report-head">
-          <h1 class="display">SuperOne Market</h1>
-          <h2>Weekly Order Report &mdash; Cigarettes</h2>
-          <div class="report-meta"><div>Date: ${dateStr}</div><div>Cigarette Items: ${cigEntries.reduce((s,e)=>s+e[1].reduce((a,i)=>a+i.orderQty,0),0)}</div></div>
-        </div>
-        ${buildPage(cigEntries)}
-      </div>`;
-    }
   }
 
   return `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>SuperOne Market Order</title>
@@ -874,6 +872,8 @@ function buildReportHtml() {
   td { padding:1.2pt 3pt; font-size:8pt; font-weight:600; border-bottom:0.5pt solid #E6DFCF; line-height:1.15; }
   td.pname { width:100%; }
   td.pqty { text-align:right; white-space:nowrap; }
+  .supplier-band { font-family:Georgia,"Noto Serif",serif; font-size:9pt; font-weight:800; text-transform:uppercase; letter-spacing:.06em; background:#000; color:#fff; padding:2pt 5pt; margin:6pt 0 4pt; break-after:avoid; page-break-after:avoid; }
+  .supplier-band:first-of-type { margin-top:0; }
   .qty-chip { display:inline-flex; align-items:center; justify-content:center; min-width:13pt; height:11pt; font-weight:800; font-size:7.5pt; border:0.75pt solid #000; border-radius:2pt; }
 </style></head>
 <body>

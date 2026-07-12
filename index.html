@@ -931,8 +931,20 @@ function renderHistory() {
     card.style.cssText = 'flex-direction:column; align-items:stretch; margin-bottom:10px; cursor:pointer;';
 
     let detailRows = '';
-    order.items.forEach(it => {
-      detailRows += `<tr><td style="width:34px;"><span class="qty-chip" style="min-width:24px;height:22px;font-size:13px;">${it.qty}</span></td><td>${esc(it.name)}</td><td style="color:var(--ink-soft);font-size:11px;text-transform:uppercase;">${esc(it.category)}</td></tr>`;
+    order.items.forEach((it, itemIdx) => {
+      detailRows += `<tr>
+        <td style="width:104px;">
+          <span style="display:inline-flex;align-items:center;border:1.5px solid var(--line);border-radius:8px;overflow:hidden;">
+            <button onclick="histChangeQty(${idx},${itemIdx},-1);event.stopPropagation();" style="width:28px;height:28px;border:none;background:#fff;font-weight:800;">&minus;</button>
+            <span style="width:26px;text-align:center;font-weight:800;">${it.qty}</span>
+            <button onclick="histChangeQty(${idx},${itemIdx},1);event.stopPropagation();" style="width:28px;height:28px;border:none;background:#fff;font-weight:800;color:var(--amber-deep);">+</button>
+          </span>
+        </td>
+        <td>${esc(it.name)}</td>
+        <td style="width:30px;text-align:right;">
+          <button onclick="histDeleteLine(${idx},${itemIdx});event.stopPropagation();" title="Remove" style="border:none;background:transparent;color:var(--red);font-size:16px;font-weight:800;">&times;</button>
+        </td>
+      </tr>`;
     });
 
     card.innerHTML = `
@@ -945,14 +957,98 @@ function renderHistory() {
       </div>
       <div id="hist-detail-${idx}" class="hidden" style="margin-top:10px; border-top:1.5px solid var(--line); padding-top:8px;">
         <table style="width:100%;">${detailRows}</table>
-        <button onclick="loadPastOrder(${idx}); event.stopPropagation();" style="margin-top:10px; width:100%; background:var(--amber-tint); color:var(--amber-deep); font-weight:700; font-size:13px; border:1.5px solid var(--amber); border-radius:9px; padding:10px;">Load these quantities into this week's order</button>
+        <div style="display:flex; gap:8px; margin-top:12px;">
+          <button onclick="printPastOrder(${idx});event.stopPropagation();" style="flex:1; background:var(--amber); color:#fff; font-weight:800; font-size:13px; border:none; border-radius:9px; padding:11px;">Print this order</button>
+          <button onclick="loadPastOrder(${idx});event.stopPropagation();" style="flex:1; background:var(--amber-tint); color:var(--amber-deep); font-weight:700; font-size:13px; border:1.5px solid var(--amber); border-radius:9px; padding:11px;">Load into this week</button>
+        </div>
+        <button onclick="deleteHistoryEntry(${idx});event.stopPropagation();" style="margin-top:8px; width:100%; background:transparent; color:var(--red); font-weight:700; font-size:12px; border:1.5px solid var(--red); border-radius:9px; padding:9px;">Delete this saved order</button>
       </div>`;
     container.appendChild(card);
   });
 }
 
+function loadHistory() {
+  try { return JSON.parse(safeStorage.getItem('superone_market_history') || '[]'); } catch (e) { return []; }
+}
+function writeHistory(h) {
+  safeStorage.setItem('superone_market_history', JSON.stringify(h));
+}
+function recalcOrder(order) {
+  order.items = order.items.filter(i => i.qty > 0);
+  order.totalCount = order.items.reduce((s, i) => s + i.qty, 0);
+}
+
+function histChangeQty(idx, itemIdx, delta) {
+  const h = loadHistory();
+  if (!h[idx] || !h[idx].items[itemIdx]) return;
+  h[idx].items[itemIdx].qty = Math.max(0, h[idx].items[itemIdx].qty + delta);
+  recalcOrder(h[idx]);
+  if (h[idx].items.length === 0) { h.splice(idx, 1); expandedHistoryIdx = null; }
+  else expandedHistoryIdx = idx;
+  writeHistory(h);
+  renderHistory();
+  reopenHistory();
+}
+
+function histDeleteLine(idx, itemIdx) {
+  const h = loadHistory();
+  if (!h[idx]) return;
+  h[idx].items.splice(itemIdx, 1);
+  recalcOrder(h[idx]);
+  if (h[idx].items.length === 0) { h.splice(idx, 1); expandedHistoryIdx = null; }
+  else expandedHistoryIdx = idx;
+  writeHistory(h);
+  renderHistory();
+  reopenHistory();
+}
+
+function reopenHistory() {
+  if (expandedHistoryIdx === null) return;
+  const el = document.getElementById('hist-detail-' + expandedHistoryIdx);
+  if (el) el.classList.remove('hidden');
+}
+
+function deleteHistoryEntry(idx) {
+  const h = loadHistory();
+  if (!h[idx]) return;
+  if (!confirm('Delete this saved order from ' + new Date(h[idx].date).toLocaleDateString() + '? This cannot be undone.')) return;
+  h.splice(idx, 1);
+  expandedHistoryIdx = null;
+  writeHistory(h);
+  renderHistory();
+}
+
+function printPastOrder(idx) {
+  const h = loadHistory();
+  const order = h[idx];
+  if (!order || order.items.length === 0) { alert('This order is empty.'); return; }
+  // Temporarily load into catalog quantities, build report, then restore.
+  const saved = catalog.map(i => ({ id: i.id, q: i.orderQty }));
+  catalog = catalog.map(i => ({ ...i, orderQty: 0 }));
+  order.items.forEach(it => {
+    const match = catalog.find(c => c.name === it.name && c.category === it.category);
+    if (match) match.orderQty = it.qty;
+  });
+  const reportHtml = buildReportHtml();
+  // restore live order
+  catalog = catalog.map(i => {
+    const s = saved.find(x => x.id === i.id);
+    return { ...i, orderQty: s ? s.q : 0 };
+  });
+  const win = window.open('', '_blank');
+  if (!win) { alert('Please allow pop-ups for this app, then tap Print again.'); return; }
+  win.document.open();
+  win.document.write(reportHtml);
+  win.document.close();
+  setTimeout(function() { win.focus(); win.print(); }, 250);
+}
+
+let expandedHistoryIdx = null;
+
 function toggleHistoryDetail(idx) {
-  document.getElementById('hist-detail-' + idx).classList.toggle('hidden');
+  const el = document.getElementById('hist-detail-' + idx);
+  const nowHidden = el.classList.toggle('hidden');
+  expandedHistoryIdx = nowHidden ? null : idx;
 }
 
 function loadPastOrder(idx) {

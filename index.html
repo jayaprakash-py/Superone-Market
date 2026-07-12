@@ -114,6 +114,11 @@ if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
   .empty-state { text-align:center; padding:56px 20px; color:var(--ink-soft); }
   .empty-state .add-new { margin-top:14px; color:#fff; font-weight:700; background:var(--blue); padding:10px 20px; border-radius:20px; font-size:13.5px; display:inline-block; border:none; box-shadow:0 2px 8px rgba(31,58,95,.28); }
 
+  /* Section headers in All view */
+  .sec-head { padding:10px 12px 6px; margin-top:6px; border-left:4px solid var(--line); }
+  .sec-head span { font-size:14px; font-weight:800; text-transform:uppercase; letter-spacing:.05em; }
+  .sec-head:first-child { margin-top:0; }
+
   /* Cigarette brand sub-categories */
   .cig-group { margin-bottom:9px; }
   .cig-head { width:100%; display:flex; align-items:center; gap:11px; padding:11px 12px; border-radius:14px; border:2px solid var(--line); background:var(--surface); text-align:left; box-shadow:0 1px 4px rgba(28,26,23,.04); }
@@ -552,6 +557,28 @@ function renderItems() {
     return;
   }
 
+  // "All" view: group items under category section headers instead of one flat list.
+  if (currentCategoryFilter === 'All' && !currentSearchQuery) {
+    let html = '';
+    // Non-cigarette categories first, each as a section.
+    nonCigCategories.forEach(cat => {
+      const items = catalog.filter(i => i.category === cat);
+      if (items.length === 0) return;
+      const color = catColor(cat);
+      html += `<div class="sec-head" style="border-left-color:${color};"><span style="color:${color};">${esc(cat)}</span></div>`;
+      html += items.map(itemRowHtml).join('');
+    });
+    // Cigarettes as one section (brands stay inside).
+    const cigItems = catalog.filter(i => i.category.indexOf('Cig - ') === 0);
+    if (cigItems.length) {
+      const color = catColor('Cigarettes');
+      html += `<div class="sec-head" style="border-left-color:${color};"><span style="color:${color};">Cigarettes</span></div>`;
+      html += cigItems.map(itemRowHtml).join('');
+    }
+    container.innerHTML = html;
+    return;
+  }
+
   const filtered = catalog.filter(item => {
     const matchesSearch = item.name.toLowerCase().includes(q) || item.category.toLowerCase().includes(q);
     let matchesCat;
@@ -751,7 +778,7 @@ function buildReportHtml() {
   function sectionHtml(category, items) {
     let rows = '';
     items.forEach(item => {
-      rows += `<tr><td><span class="qty-chip">${item.orderQty}</span></td><td>${esc(item.name)}</td></tr>`;
+      rows += `<tr><td class="pname">${esc(item.name)}</td><td class="pqty"><span class="qty-chip">${item.orderQty}</span></td></tr>`;
     });
     const label = category.indexOf('Cig - ') === 0 ? category.slice(6) : category;
     return `<div class="cat-section"><h2 class="cat-title">${esc(label)}</h2><table><tbody>${rows}</tbody></table></div>`;
@@ -824,6 +851,8 @@ function buildReportHtml() {
   .cat-title { font-family:Georgia,"Noto Serif",serif; font-size:8pt; font-weight:700; text-transform:uppercase; padding-bottom:1.5pt; margin:0 0 2pt; border-bottom:0.75pt solid #000; }
   table { width:100%; border-collapse:collapse; }
   td { padding:1.2pt 3pt; font-size:8pt; font-weight:600; border-bottom:0.5pt solid #E6DFCF; line-height:1.15; }
+  td.pname { width:100%; }
+  td.pqty { text-align:right; white-space:nowrap; }
   .qty-chip { display:inline-flex; align-items:center; justify-content:center; min-width:13pt; height:11pt; font-weight:800; font-size:7.5pt; border:0.75pt solid #000; border-radius:2pt; }
 </style></head>
 <body>

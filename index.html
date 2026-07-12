@@ -219,6 +219,12 @@ if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
     </div>
   </header>
   <div class="pills" id="category-pills"></div>
+  <div id="editing-banner" class="hidden" style="max-width:640px;margin:0 auto;padding:0 16px;">
+    <div style="background:var(--amber-tint);border:1.5px solid var(--amber);color:var(--amber-deep);border-radius:10px;padding:9px 12px;font-size:12.5px;font-weight:700;display:flex;justify-content:space-between;align-items:center;gap:10px;">
+      <span id="editing-banner-text">Editing a past order</span>
+      <button onclick="cancelEditing()" style="background:var(--amber);color:#fff;border:none;border-radius:7px;padding:6px 12px;font-weight:700;font-size:12px;">Done</button>
+    </div>
+  </div>
   <div id="item-list"></div>
 </div>
 
@@ -886,11 +892,20 @@ function saveOrderToHistory() {
   if (ordered.length === 0) return;
   let history = [];
   try { history = JSON.parse(safeStorage.getItem('superone_market_history') || '[]'); } catch (e) { history = []; }
-  history.unshift({
-    date: new Date().toISOString(),
+  const entry = {
+    date: editingHistoryDate || new Date().toISOString(),
     totalCount: ordered.reduce((s, i) => s + i.orderQty, 0),
     items: ordered.map(i => ({ name: i.name, category: i.category, qty: i.orderQty }))
-  });
+  };
+  if (editingHistoryDate) {
+    // Editing an existing order: replace that entry in place.
+    const pos = history.findIndex(o => o.date === editingHistoryDate);
+    if (pos !== -1) history[pos] = entry;
+    else history.unshift(entry);
+    editingHistoryDate = null;
+  } else {
+    history.unshift(entry);
+  }
   if (history.length > 104) history = history.slice(0, 104); // keep ~2 years of weekly orders
   safeStorage.setItem('superone_market_history', JSON.stringify(history));
 }
@@ -928,40 +943,18 @@ function renderHistory() {
     const dateStr = d.toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
     const card = document.createElement('div');
     card.className = 'item-row';
-    card.style.cssText = 'flex-direction:column; align-items:stretch; margin-bottom:10px; cursor:pointer;';
-
-    let detailRows = '';
-    order.items.forEach((it, itemIdx) => {
-      detailRows += `<tr>
-        <td style="width:104px;">
-          <span style="display:inline-flex;align-items:center;border:1.5px solid var(--line);border-radius:8px;overflow:hidden;">
-            <button onclick="histChangeQty(${idx},${itemIdx},-1);event.stopPropagation();" style="width:28px;height:28px;border:none;background:#fff;font-weight:800;">&minus;</button>
-            <span style="width:26px;text-align:center;font-weight:800;">${it.qty}</span>
-            <button onclick="histChangeQty(${idx},${itemIdx},1);event.stopPropagation();" style="width:28px;height:28px;border:none;background:#fff;font-weight:800;color:var(--amber-deep);">+</button>
-          </span>
-        </td>
-        <td>${esc(it.name)}</td>
-        <td style="width:30px;text-align:right;">
-          <button onclick="histDeleteLine(${idx},${itemIdx});event.stopPropagation();" title="Remove" style="border:none;background:transparent;color:var(--red);font-size:16px;font-weight:800;">&times;</button>
-        </td>
-      </tr>`;
-    });
+    card.style.cssText = 'flex-direction:column; align-items:stretch; margin-bottom:10px;';
 
     card.innerHTML = `
-      <div style="display:flex; justify-content:space-between; align-items:center;" onclick="toggleHistoryDetail(${idx})">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
         <div>
           <div style="font-weight:700; font-size:15px;">${dateStr}</div>
           <div style="font-size:12px; color:var(--ink-soft); font-weight:600;">${order.items.length} products, ${order.totalCount} total items</div>
         </div>
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div id="hist-detail-${idx}" class="hidden" style="margin-top:10px; border-top:1.5px solid var(--line); padding-top:8px;">
-        <table style="width:100%;">${detailRows}</table>
-        <div style="display:flex; gap:8px; margin-top:12px;">
-          <button onclick="histAddItem(${idx});event.stopPropagation();" style="flex:1; background:var(--amber-tint); color:var(--amber-deep); font-weight:700; font-size:13px; border:1.5px solid var(--amber); border-radius:9px; padding:11px;">+ Add item</button>
-          <button onclick="printPastOrder(${idx});event.stopPropagation();" style="flex:1; background:var(--amber); color:#fff; font-weight:800; font-size:13px; border:none; border-radius:9px; padding:11px;">Print this order</button>
-        </div>
-        <button onclick="deleteHistoryEntry(${idx});event.stopPropagation();" style="margin-top:8px; width:100%; background:transparent; color:var(--red); font-weight:700; font-size:12px; border:1.5px solid var(--red); border-radius:9px; padding:9px;">Delete this saved order</button>
+      <div style="display:flex; gap:8px; margin-top:12px;">
+        <button onclick="editPastOrder(${idx})" style="flex:1; background:var(--amber); color:#fff; font-weight:800; font-size:13px; border:none; border-radius:9px; padding:11px;">Open &amp; Edit</button>
+        <button onclick="deleteHistoryEntry(${idx})" style="background:transparent; color:var(--red); font-weight:700; font-size:13px; border:1.5px solid var(--red); border-radius:9px; padding:11px 16px;">Delete</button>
       </div>`;
     container.appendChild(card);
   });
@@ -978,123 +971,50 @@ function recalcOrder(order) {
   order.totalCount = order.items.reduce((s, i) => s + i.qty, 0);
 }
 
-function histChangeQty(idx, itemIdx, delta) {
+let editingHistoryDate = null; // when set, printing updates this history entry instead of adding new
+
+function editPastOrder(idx) {
   const h = loadHistory();
-  if (!h[idx] || !h[idx].items[itemIdx]) return;
-  h[idx].items[itemIdx].qty = Math.max(0, h[idx].items[itemIdx].qty + delta);
-  recalcOrder(h[idx]);
-  if (h[idx].items.length === 0) { h.splice(idx, 1); expandedHistoryIdx = null; }
-  else expandedHistoryIdx = idx;
-  writeHistory(h);
-  renderHistory();
-  reopenHistory();
+  const order = h[idx];
+  if (!order) return;
+  // Load the past order's quantities into the catalog.
+  catalog = catalog.map(i => ({ ...i, orderQty: 0 }));
+  order.items.forEach(it => {
+    const match = catalog.find(c => c.name === it.name && c.category === it.category);
+    if (match) match.orderQty = it.qty;
+  });
+  editingHistoryDate = order.date; // remember which order we're editing
+  saveState();
+  updateEditingBanner();
+  switchView('shop');
 }
 
-function histDeleteLine(idx, itemIdx) {
-  const h = loadHistory();
-  if (!h[idx]) return;
-  h[idx].items.splice(itemIdx, 1);
-  recalcOrder(h[idx]);
-  if (h[idx].items.length === 0) { h.splice(idx, 1); expandedHistoryIdx = null; }
-  else expandedHistoryIdx = idx;
-  writeHistory(h);
-  renderHistory();
-  reopenHistory();
-}
-
-function reopenHistory() {
-  if (expandedHistoryIdx === null) return;
-  const el = document.getElementById('hist-detail-' + expandedHistoryIdx);
-  if (el) el.classList.remove('hidden');
-}
-
-function histAddItem(idx) {
-  const h = loadHistory();
-  if (!h[idx]) return;
-  const query = prompt('Add an item to this order.\nType part of the product name:');
-  if (!query || !query.trim()) return;
-  const q = query.trim().toLowerCase();
-  const matches = catalog.filter(i => i.name.toLowerCase().includes(q) || i.category.toLowerCase().includes(q));
-  if (matches.length === 0) { alert('No product found matching "' + query.trim() + '".'); return; }
-  let chosen;
-  if (matches.length === 1) {
-    chosen = matches[0];
+function updateEditingBanner() {
+  const banner = document.getElementById('editing-banner');
+  if (!banner) return;
+  if (editingHistoryDate) {
+    document.getElementById('editing-banner-text').innerText = 'Editing order from ' + new Date(editingHistoryDate).toLocaleDateString();
+    banner.classList.remove('hidden');
   } else {
-    const list = matches.slice(0, 20).map((m, i) => (i + 1) + '. ' + m.name + ' (' + m.category.replace('Cig - ', '') + ')').join('\n');
-    const pick = prompt('Multiple matches — type the number:\n\n' + list);
-    const n = parseInt(pick, 10);
-    if (isNaN(n) || n < 1 || n > matches.length) return;
-    chosen = matches[n - 1];
+    banner.classList.add('hidden');
   }
-  const qtyStr = prompt('Quantity for ' + chosen.name + ':', '1');
-  let qty = parseInt(qtyStr, 10);
-  if (isNaN(qty) || qty < 1) return;
-  // if already in the order, add to it; else push new line
-  const existing = h[idx].items.find(it => it.name === chosen.name && it.category === chosen.category);
-  if (existing) existing.qty += qty;
-  else h[idx].items.push({ name: chosen.name, category: chosen.category, qty: qty });
-  recalcOrder(h[idx]);
-  expandedHistoryIdx = idx;
-  writeHistory(h);
-  renderHistory();
-  reopenHistory();
 }
 
-function deleteHistoryEntry(idx) {  const h = loadHistory();
+function cancelEditing() {
+  editingHistoryDate = null;
+  catalog = catalog.map(i => ({ ...i, orderQty: 0 }));
+  saveState();
+  updateEditingBanner();
+  renderItems();
+}
+
+function deleteHistoryEntry(idx) {
+  const h = loadHistory();
   if (!h[idx]) return;
   if (!confirm('Delete this saved order from ' + new Date(h[idx].date).toLocaleDateString() + '? This cannot be undone.')) return;
   h.splice(idx, 1);
-  expandedHistoryIdx = null;
   writeHistory(h);
   renderHistory();
-}
-
-function printPastOrder(idx) {
-  const h = loadHistory();
-  const order = h[idx];
-  if (!order || order.items.length === 0) { alert('This order is empty.'); return; }
-  // Temporarily load into catalog quantities, build report, then restore.
-  const saved = catalog.map(i => ({ id: i.id, q: i.orderQty }));
-  catalog = catalog.map(i => ({ ...i, orderQty: 0 }));
-  order.items.forEach(it => {
-    const match = catalog.find(c => c.name === it.name && c.category === it.category);
-    if (match) match.orderQty = it.qty;
-  });
-  const reportHtml = buildReportHtml();
-  // restore live order
-  catalog = catalog.map(i => {
-    const s = saved.find(x => x.id === i.id);
-    return { ...i, orderQty: s ? s.q : 0 };
-  });
-  const win = window.open('', '_blank');
-  if (!win) { alert('Please allow pop-ups for this app, then tap Print again.'); return; }
-  win.document.open();
-  win.document.write(reportHtml);
-  win.document.close();
-  setTimeout(function() { win.focus(); win.print(); }, 250);
-}
-
-let expandedHistoryIdx = null;
-
-function toggleHistoryDetail(idx) {
-  const el = document.getElementById('hist-detail-' + idx);
-  const nowHidden = el.classList.toggle('hidden');
-  expandedHistoryIdx = nowHidden ? null : idx;
-}
-
-function loadPastOrder(idx) {
-  let history = [];
-  try { history = JSON.parse(safeStorage.getItem('superone_market_history') || '[]'); } catch (e) { return; }
-  const order = history[idx];
-  if (!order) return;
-  if (!confirm('Replace this week\'s quantities with the order from ' + new Date(order.date).toLocaleDateString() + '?')) return;
-  catalog = catalog.map(i => ({ ...i, orderQty: 0 }));
-  order.items.forEach(it => {
-    const match = catalog.find(c => c.name === it.name && c.category === it.category);
-    if (match) match.orderQty = it.qty;
-  });
-  saveState();
-  switchView('shop');
 }
 
 function switchView(target) {
@@ -1120,7 +1040,9 @@ function switchView(target) {
 function clearEntireOrder() {
   if (confirm("Are you sure you want to completely clear this entire weekly order?")) {
     catalog = catalog.map(i => ({ ...i, orderQty: 0 }));
+    editingHistoryDate = null;
     saveState();
+    updateEditingBanner();
     switchView('shop');
     renderItems();
   }

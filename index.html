@@ -11,9 +11,24 @@
 <script>
 // Register the service worker (only works when hosted, e.g. GitHub Pages —
 // silently skipped when opened as a local file, so nothing breaks).
+// Also checks for a newer version on every load and applies it automatically,
+// so pushing an update to GitHub just shows up next time — no cache clearing.
 if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
   window.addEventListener('load', function() {
-    navigator.serviceWorker.register('sw.js').catch(function(){});
+    navigator.serviceWorker.register('sw.js').then(function(reg) {
+      reg.update();
+      reg.addEventListener('updatefound', function() {
+        var newWorker = reg.installing;
+        if (!newWorker) return;
+        newWorker.addEventListener('statechange', function() {
+          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+            // A new version is ready — activate and reload once to show it.
+            newWorker.postMessage && newWorker.postMessage('skipWaiting');
+            window.location.reload();
+          }
+        });
+      });
+    }).catch(function(){});
   });
 }
 </script>
@@ -222,6 +237,10 @@ if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
     </div>
   </div>
   <div id="history-list" style="padding:16px; max-width:640px; margin:0 auto;"></div>
+  <div style="padding:0 16px 24px; max-width:640px; margin:0 auto;">
+    <button onclick="resetCatalogToLatest()" style="width:100%; background:var(--surface); color:var(--red); font-weight:700; font-size:13px; border:1.5px solid var(--line); border-radius:9px; padding:12px;">Update product list to latest version</button>
+    <p style="font-size:11px; color:var(--ink-soft); margin:8px 2px 0; line-height:1.4;">Refreshes all categories and items to the newest version. Your saved order history is kept. Any current unsaved quantities will be cleared.</p>
+  </div>
 </div>
 
 <div id="add-modal" class="modal-bg hidden">
@@ -677,6 +696,14 @@ function printOrder() {
   win.document.close();
   setTimeout(function() { win.focus(); win.print(); }, 250);
 }
+function resetCatalogToLatest() {
+  if (!confirm('Rebuild the product list to the latest version? Your order history is kept, but any quantities you have not printed yet will be cleared.')) return;
+  catalog = buildFreshCatalog();
+  safeStorage.setItem('superone_market_catalog', JSON.stringify(catalog));
+  updateGlobalBadges();
+  switchView('shop');
+}
+
 function renderHistory() {
   const container = document.getElementById('history-list');
   let history = [];

@@ -959,7 +959,6 @@ function renderHistory() {
         <table style="width:100%;">${detailRows}</table>
         <div style="display:flex; gap:8px; margin-top:12px;">
           <button onclick="printPastOrder(${idx});event.stopPropagation();" style="flex:1; background:var(--amber); color:#fff; font-weight:800; font-size:13px; border:none; border-radius:9px; padding:11px;">Print this order</button>
-          <button onclick="loadPastOrder(${idx});event.stopPropagation();" style="flex:1; background:var(--amber-tint); color:var(--amber-deep); font-weight:700; font-size:13px; border:1.5px solid var(--amber); border-radius:9px; padding:11px;">Load into this week</button>
         </div>
         <button onclick="deleteHistoryEntry(${idx});event.stopPropagation();" style="margin-top:8px; width:100%; background:transparent; color:var(--red); font-weight:700; font-size:12px; border:1.5px solid var(--red); border-radius:9px; padding:9px;">Delete this saved order</button>
       </div>`;

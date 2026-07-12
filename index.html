@@ -317,7 +317,10 @@ const initialData = {
   "Lil Leaf": ["Original", "Mango", "Dark White", "Dark Red", "Cognac & Honey", "Gold Russian", "Russian Cream", "Dark", "Gold", "White Rum"],
   "Loose Leaf": ["Russian Cream", "Sweet Aromatic Gold", "Natural Leaf Gold", "Cookies Cinnamon Milk", "Cookies & Cream"],
   "Boss Leaf": ["Natural Original", "Aromatic", "Jamaican Dream"],
-  "Other Wraps": ["Lava Kush - Lava Trufflez", "LIT - Mango", "LIT - Maui", "LIT - Purp", "Camo - Naked", "Camo - Russian", "Camo - Honey", "Camo - Goji", "Camo - Passion", "Camo - Vanilla", "Camo - Natural", "Harvest Hemp", "True Hemp", "Natty - Natural", "Natty - Pineapple", "Natty - Watermelon", "Wild Hemp - Natural", "Wild Hemp - Diamond"],
+  "Camo": ["Naked", "Russian", "Honey", "Goji", "Passion", "Vanilla", "Natural"],
+  "Hemp Wraps": ["Harvest Hemp", "True Hemp"],
+  "Wild Hemp": ["Natural", "Diamond"],
+  "Natty": ["Natural", "Pineapple", "Watermelon"],
   "RAW & Papers": ["RAW 1.25", "RAW 1.5", "RAW King Slim", "RAW King Jumbo", "RAW Tips", "RAW 20pk King", "RAW 20pk 1.25", "RAW Cones 6pk", "RAW Cones 3pk", "Joker 1.25", "Joker 1.5", "Blizzy - Orig", "Blizzy - Russian"],
   "Vapes": ["Geekbars - Miami", "Geekbars - Frz Wtr", "Geekbars - Bl Razz", "Geekbars - Blkbry Bpop", "Breeze - Cherry Lem", "Breeze - Blue Mint", "Breeze - Spearmint", "Breeze - Banana Mint", "Breeze - Blue Razz", "Breeze - Blue Banana", "Breeze - Strw Peach", "Breeze - Pineapple Coco", "Breeze - Pomegranate", "Breeze - Citrus", "Breeze - OR Mango"],
   "Cig - Newport": ["Menthol Box Kings", "Menthol Box 100s", "Menthol Soft Kings", "Menthol Soft 100s", "Menthol Gold Box Kings", "Menthol Gold Box 100s", "Non-Menthol Box Kings", "Non-Menthol Box 100s", "Smooth Select Box Kings", "Smooth Gold Box Kings"],
@@ -918,6 +921,17 @@ function printOrder() {
   win.document.write(buildReportHtml());
   win.document.close();
   setTimeout(function() { win.focus(); win.print(); }, 250);
+  // The order is now saved in history, so offer to clear the cart for a fresh start.
+  setTimeout(function() {
+    if (confirm('Order saved to history and sent to print.\n\nClear the cart now for your next order?\n\nOK = Clear    Cancel = Keep items')) {
+      catalog = catalog.map(i => ({ ...i, orderQty: 0 }));
+      editingHistoryDate = null;
+      saveState();
+      if (typeof updateEditingBanner === 'function') updateEditingBanner();
+      switchView('shop');
+      renderItems();
+    }
+  }, 700);
 }
 function resetCatalogToLatest() {
   if (!confirm('Rebuild the product list to the latest version? Your order history is kept, but any quantities you have not printed yet will be cleared.')) return;
@@ -1048,10 +1062,81 @@ function clearEntireOrder() {
   }
 }
 
+// Go back one screen level, like the phone's back gesture.
+function goBack() {
+  const printOpen = !document.getElementById('print-view').classList.contains('hidden');
+  const historyOpen = !document.getElementById('history-view').classList.contains('hidden');
+  if (printOpen || historyOpen) {
+    switchView('shop');
+    return true;
+  }
+  // On shop screen: if inside a category or search, go back to the All menu.
+  if (currentCategoryFilter !== 'All' || currentSearchQuery) {
+    currentCategoryFilter = 'All';
+    currentSearchQuery = '';
+    expandedCigBrand = null;
+    const si = document.getElementById('search-input');
+    if (si) si.value = '';
+    const cs = document.getElementById('clear-search');
+    if (cs) cs.style.display = 'none';
+    renderCategories();
+    renderItems();
+    window.scrollTo(0, 0);
+    return true;
+  }
+  return false; // already at top level
+}
+
+// Edge-swipe to go back: swipe inward from the left OR right edge of the screen.
+(function() {
+  let startX = 0, startY = 0, tracking = false;
+  const EDGE = 30;        // px from an edge where the swipe must start
+  const DIST = 70;        // px horizontal travel required
+  const VTOL = 45;        // max vertical drift allowed
+  document.addEventListener('touchstart', function(e) {
+    const t = e.touches[0];
+    const w = window.innerWidth;
+    if (t.clientX <= EDGE || t.clientX >= w - EDGE) {
+      startX = t.clientX; startY = t.clientY; tracking = true;
+    } else {
+      tracking = false;
+    }
+  }, { passive: true });
+  document.addEventListener('touchend', function(e) {
+    if (!tracking) return;
+    tracking = false;
+    const t = e.changedTouches[0];
+    const dx = t.clientX - startX;
+    const dy = Math.abs(t.clientY - startY);
+    const w = window.innerWidth;
+    if (dy > VTOL) return;
+    // From left edge: swipe right. From right edge: swipe left. Either goes back.
+    const fromLeft = startX <= EDGE && dx > DIST;
+    const fromRight = startX >= w - EDGE && dx < -DIST;
+    if (fromLeft || fromRight) goBack();
+  }, { passive: true });
+})();
+
 try {
   renderCategories();
   renderItems();
   updateGlobalBadges();
+  // If there's already an order in progress from a previous session, ask what to do.
+  (function() {
+    const inProgress = catalog.reduce((s, i) => s + i.orderQty, 0);
+    if (inProgress > 0) {
+      setTimeout(function() {
+        const keep = confirm('You have an order in progress (' + inProgress + ' items).\n\nOK = Keep it and continue editing\nCancel = Clear and start fresh');
+        if (!keep) {
+          catalog = catalog.map(i => ({ ...i, orderQty: 0 }));
+          editingHistoryDate = null;
+          saveState();
+          if (typeof updateEditingBanner === 'function') updateEditingBanner();
+          renderItems();
+        }
+      }, 300);
+    }
+  })();
 } catch (e) {
   document.getElementById('item-list').innerHTML =
     '<div class="empty-state">' +

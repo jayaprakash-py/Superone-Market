@@ -250,21 +250,22 @@ if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
 <script>
 const initialData = {
   "Black & Mild": ["Loose - Reg", "Loose - Jazz", "Loose - Casino", "Loose - Wine", "Loose - Sweet", "Loose - Apple", "Loose - Cream", "Loose - Cherry", "Loose - Select", "Loose - WT Casino", "Loose - WT Jazz", "Loose - WT Sweet", "Loose - WT Reg", "Loose - WT Wine", "5 Pack - Reg", "5 Pack - Wine", "5 Pack - Jazz", "5 Pack - Casino", "5 Pack - Sweet", "5 Pack - Apple", "5 Pack - Cream", "5 Pack - WT Wine", "5 Pack - WT Reg", "FT - Reg", "FT - Sweet", "Gold & Mild", "Deluxe"],
-  "Slapwood": ["Dark", "Reg"],
-  "Hemp Wraps": ["Harvest Hemp", "True Hemp"],
   "Swisher": ["Red", "Diamond", "Silver", "Green", "Peach", "Grape", "Strawberry", "Blueberry", "Black", "Wild Rush", "Tropical Fusion", "Summer Twist", "Banana Smash", "Leaf - Original", "Leaf - Honey", "Leaf - Peach", "Leaf - Cognac", "Leaf - Aromatic", "Leaf - Irish", "Leaf - Dark Stout", "Mini - Orig", "Mini - Diamond", "Mini - Short Red", "Mini - Grape", "Mini - Blueberry", "Wraps - Orig", "Wraps - Irish", "Wraps - Peach", "Wraps - Smooth"],
   "White Owl": ["Red", "Green", "Silver", "Peach", "Emerald", "White Grape", "Mango", "Blue Raspberry", "Tropical Twist", "Honey", "Black", "Gold", "Blue", "Platinum", "White Russian", "Strawberry", "Pineapple", "Vanilla", "Sweets"],
   "Game": ["Red", "Blue", "Diamond", "Silver", "Green", "Black", "Black Sweet", "Grape", "Honey", "Pineapple", "White Grape", "Mango", "White Peach", "Vanilla", "Black Cherry", "Gold", "Wine", "Blueberry"],
   "Zig Zag": ["Straight up", "Red", "Green", "Pink", "Blueberry", "Grape", "Diamond", "Island Hemp", "Apple", "Cherry", "Vanilla", "Mango", "Strawberry", "Melon", "NL - White Russian", "NL - Southern Peach", "NL - Strawberry Rush", "NL - Sweet Cognac"],
   "Dutch": ["Palma", "Green Env", "Honey", "Sweet", "Berry", "OG", "Roy Haze", "Blue Dream", "Irish", "Gold", "Platinum", "Silver", "Blue Jazz", "Vanilla", "Chocolate", "Creme", "Java", "Russian Cream", "Grape", "Mint", "Blue"],
-  "Natty": ["Natural", "Pineapple", "Watermelon"],
-  "Wild Hemp": ["Natural", "Diamond"],
-  "Lil Leaf": ["Russ Cream", "Mango", "Dark Red", "Dark White", "Cognac", "Orig", "Wht Rum", "Dark"],
-  "Show & Others": ["Show - Sweet", "Show - Silver", "Show - Wht Grape", "Show - Watermelon", "Show - Diamond", "Show - WET/Fruity", "Show - Green", "Good Time - Red", "Good Time - Green", "Good Time - Diamond", "Good Time - White Grape", "Good Time - Watermelon", "Good Time - Blueberry", "Good Time - Vanilla", "Good Time - Mango", "Good Time - Peach", "Good Time - Black Sweet", "Good Time - Cognac", "Supreme - Red", "Supreme - Green", "Al Capone - Rum", "Al Capone - Orig", "Al Capone - Cognac"],
-  "Backwoods & BLK": ["BW 5pk - Russ Cream", "BW 5pk - Banana", "BW 5pk - Caramel", "BW 5pk - Vanilla", "BW 5pk - Grape", "BW 5pk - Chocolate", "BW 5pk - Original", "BW 5pk - Honey", "BW 5pk - Honey Berry", "BW 5pk - Honey Bourbon", "BW 5pk - Sweet Aromatic", "BW 5pk - Dark Stout", "BW 5pk - Black Russian", "BW 5pk - Cognac XO", "BW 5pk - Wild Rum", "BW 5pk - Smooth", "BLK - Smooth", "BLK - Grape", "BLK - Berry", "BLK - Cherry", "BLK - Wine", "BLK - Cocoa", "Dawoods - Afghani", "Dawoods - Cheetah", "Dawoods - Diesel"],
+  "Show": ["Sweet", "Silver", "White Grape", "Watermelon", "Diamond", "WET/Fruity", "Green", "Kiwi Strawberry", "Mango", "Pineapple Buzz"],
+  "Good Time & Supreme": ["Good Time - Red", "Good Time - Green", "Good Time - Diamond", "Good Time - White Grape", "Good Time - Watermelon", "Good Time - Blueberry", "Good Time - Vanilla", "Good Time - Mango", "Good Time - Peach", "Good Time - Black Sweet", "Good Time - Cognac", "Supreme - Red", "Supreme - Green", "Al Capone - Rum", "Al Capone - Orig", "Al Capone - Cognac"],
+  "Backwoods & BLK": ["BW 5pk - Russ Cream", "BW 5pk - Banana", "BW 5pk - Caramel", "BW 5pk - Vanilla", "BW 5pk - Grape", "BW 5pk - Chocolate", "BW 5pk - Original", "BW 5pk - Honey", "BW 5pk - Honey Berry", "BW 5pk - Honey Bourbon", "BW 5pk - Sweet Aromatic", "BW 5pk - Dark Stout", "BW 5pk - Black Russian", "BW 5pk - Cognac XO", "BW 5pk - Wild Rum", "BW 5pk - Smooth", "BLK - Smooth", "BLK - Grape", "BLK - Berry", "BLK - Cherry", "BLK - Wine", "BLK - Cocoa"],
+  "Da Woods": ["Sticky Icky", "Smoreos Russ Cream", "Afghani Buzz", "Mango Runts", "Platinum Jack", "CLE Land", "Georgia Pie", "Rizz"],
+  "Slapwood": ["Russian Cream", "Dubai Chocolate", "Bloody Hot", "Cotton Candy", "Sweet Banana", "Natural", "Sweet Aromatic", "Dark Edition"],
+  "Lil Leaf": ["Original", "Mango", "Dark White", "Dark Red", "Cognac & Honey", "Gold Russian", "Russian Cream", "Dark", "Gold", "White Rum"],
+  "Loose Leaf": ["Russian Cream", "Sweet Aromatic Gold", "Natural Leaf Gold", "Cookies Cinnamon Milk", "Cookies & Cream"],
+  "Boss Leaf": ["Natural Original", "Aromatic", "Jamaican Dream"],
+  "Other Wraps": ["Lava Kush - Lava Trufflez", "LIT - Mango", "LIT - Maui", "LIT - Purp", "Camo - Naked", "Camo - Russian", "Camo - Honey", "Camo - Goji", "Camo - Passion", "Camo - Vanilla", "Camo - Natural", "Harvest Hemp", "True Hemp", "Natty - Natural", "Natty - Pineapple", "Natty - Watermelon", "Wild Hemp - Natural", "Wild Hemp - Diamond"],
   "RAW & Papers": ["RAW 1.25", "RAW 1.5", "RAW King Slim", "RAW King Jumbo", "RAW Tips", "RAW 20pk King", "RAW 20pk 1.25", "RAW Cones 6pk", "RAW Cones 3pk", "Joker 1.25", "Joker 1.5", "Blizzy - Orig", "Blizzy - Russian"],
   "Vapes": ["Geekbars - Miami", "Geekbars - Frz Wtr", "Geekbars - Bl Razz", "Geekbars - Blkbry Bpop", "Breeze - Cherry Lem", "Breeze - Blue Mint", "Breeze - Spearmint", "Breeze - Banana Mint", "Breeze - Blue Razz", "Breeze - Blue Banana", "Breeze - Strw Peach", "Breeze - Pineapple Coco", "Breeze - Pomegranate", "Breeze - Citrus", "Breeze - OR Mango"],
-  "Leaves & Wraps": ["Lava Kush - Lava Trufflez", "LIT - Mango", "LIT - Maui", "LIT - Purp", "Boss Leaf - Orig", "Boss Leaf - Cookies", "Boss Leaf - Jamaican", "Camo - Naked", "Camo - Russian", "Camo - Honey", "Camo - Goji", "Camo - Passion", "Camo - Vanilla", "Camo - Natural", "Looseleaf - Cookies", "Looseleaf - Emerald", "Looseleaf - Ruby"],
   "Misc & Store": ["Pickles - Hot", "Pickles - Kosher", "Pickles - Dill", "Gum - Doublemint", "Gum - Spearmint", "Gum - Juicy Frt", "Gum - Winterfresh", "Gum - Big Red", "Toothbrushes (10)", "Toothpaste", "Vaseline (50ml)", "Axe", "Slimelicker", "Tshirts/Thermals", "Cheap Prerolls"]
 };
 
@@ -314,6 +315,17 @@ try {
     }
   });
   if (recategorized) safeStorage.setItem('superone_market_catalog', JSON.stringify(catalog));
+
+  // Rename old Lil Leaf flavor shorthand to the corrected shelf-accurate names.
+  const lilLeafRenames = { 'Russ Cream': 'Russian Cream', 'Orig': 'Original', 'Cognac': 'Cognac & Honey', 'Wht Rum': 'White Rum' };
+  let llRenamed = false;
+  catalog.forEach(item => {
+    if (item.category === 'Lil Leaf' && lilLeafRenames[item.name]) {
+      item.name = lilLeafRenames[item.name];
+      llRenamed = true;
+    }
+  });
+  if (llRenamed) safeStorage.setItem('superone_market_catalog', JSON.stringify(catalog));
 
   // Sync: any item in the base catalog that's missing from the saved list gets
   // added at qty 0, without touching items or quantities the person already has.
